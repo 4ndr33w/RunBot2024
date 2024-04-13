@@ -28,7 +28,6 @@ namespace RunBot2024.Controllers
             await Client.SendTextMessageAsync(FromId, "HelloMessage");
             await Client.SendTextMessageAsync(FromId, $"{_users.Count()} \n{_users.Where(c => c.Id == FromId).FirstOrDefault().Role}");
             await Client.SendTextMessageAsync(FromId, $"{_users.Where(c => c.Id == FromId).FirstOrDefault().FullName}");
-            //await Client.SendTextMessageAsync(FromId, $"{_users.Where(c => c.Id == FromId).FirstOrDefault().UserName}");
         }
 
         [On(Handle.BeforeAll)]
@@ -43,32 +42,31 @@ namespace RunBot2024.Controllers
                     UserName = Context!.GetUsername()!,
                     Role = Models.Enums.UserRole.user
                 };
+                
                 _sqLiteConnection.Insert(user);
-                _sqLiteConnection.Close();
                 _logger.LogInformation($"Added new user: {FromId}");
             }
         }
 
-        //[On(Handle.Exception)]
-        //public async Task OnException(Exception e)
-        //{
-        //    _logger.LogError(e, "Unhandled exception");
-        //    if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
-        //    {
-        //        await AnswerCallback($"Error:\n{e}");
-        //    }
-        //    else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
-        //    {
-        //        Push($"Error:\n{e}");
-        //    }
-        //}
+        [On(Handle.Exception)]
+        public async Task OnException(Exception e)
+        {
+            _logger.LogError(e, "Unhandled exception");
+            if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+            {
+                await AnswerCallback($"Error:\n{e}");
+            }
+            else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            {
+                Push($"Error");
+            }
+        }
 
         [On(Handle.Unauthorized)]
-        //[Action("/test")]
-        //public void Unauthorized()
-        //{
-        //    Push("Unauthorized");
-        //}
+        public void Unauthorized()
+        {
+            Push("Forbidden");
+        }
 
         [Action("/test")]
         [Authorize("admin")]
@@ -77,7 +75,6 @@ namespace RunBot2024.Controllers
             await Send("Authorized");
         }
 
-        //[Authorize]
         [Action("/setAdmin")]
         public async Task SetAdmin()
         {
@@ -85,7 +82,7 @@ namespace RunBot2024.Controllers
             if (FromId == mainAdminTelegramId)
             {
                 PushL("Кого назначить админом?");
-               //await Client.SendTextMessageAsync(FromId, "Кого назначить админом?");
+
                 foreach (var user in _users)
                 {
                     string userName = user.Id.ToString();
@@ -99,7 +96,6 @@ namespace RunBot2024.Controllers
         [Action]
         public async Task ChangeUserToAdmin(RunBot2024.Models.User user)
         {
-            //var user = _users.First(u => u.Id == Convert.ToInt64(telegramId));
             if (user.Role == Models.Enums.UserRole.admin)
             {
                 await Send($"User {user.Id} already admin");
@@ -110,7 +106,6 @@ namespace RunBot2024.Controllers
 
                 _sqLiteConnection.Update(user);
 
-                _sqLiteConnection.Close();
                 var userName = user.Id.ToString();
                 _logger.LogInformation($"User {userName} status changed to admin");
                 await Send($"User {userName} status changed to admin");
