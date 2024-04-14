@@ -1,6 +1,9 @@
 using Deployf.Botf;
+using Microsoft.EntityFrameworkCore;
+using RunBot2024.DbContexts;
 using RunBot2024.Models;
 using RunBot2024.Services;
+using RunBot2024.Services.Interfaces;
 using SQLite;
 //using Microsoft.Data.Sqlite;
 //using SQLitePCL;
@@ -13,25 +16,29 @@ namespace RunBot2024
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var connectionString = builder.Configuration.GetConnectionString("NpgConnection");
+
+            builder.Services.AddDbContext<NpgDbContext>(op => op.UseNpgsql(connectionString));
+
             // Add services to the container.
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllers();
 
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
-            app.UseStaticFiles();
+            //if (!app.Environment.IsDevelopment())
+            //{
+            //    app.UseExceptionHandler("/Home/Error");
+            //}
+            //app.UseStaticFiles();
 
-            app.UseRouting();
+            //app.UseRouting();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+            //app.MapControllerRoute(
+            //    name: "default",
+            //    pattern: "{controller=Home}/{action=Index}/{id?}");
 
             BotfProgram.StartBot(args, onConfigure: (svc, cfg) =>
             {
@@ -44,6 +51,10 @@ namespace RunBot2024
                 svc.AddSingleton(db);
 
                 svc.AddSingleton<IBotUserService, UserService>();
+
+                ///////////////////////////////
+
+                svc.AddScoped<IRivalService, RivalService>(provider => new RivalService(builder.Configuration));
             });
 
             app.Run();

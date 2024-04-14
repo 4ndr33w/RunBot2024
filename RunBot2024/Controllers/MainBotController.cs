@@ -23,11 +23,26 @@ namespace RunBot2024.Controllers
             _configuration = configuration;
         }
         [Action("/start", "start bot")]
-        public async void Start()
+        public async Task Start()
         {
-            await Client.SendTextMessageAsync(FromId, "HelloMessage");
-            await Client.SendTextMessageAsync(FromId, $"{_users.Count()} \n{_users.Where(c => c.Id == FromId).FirstOrDefault().Role}");
-            await Client.SendTextMessageAsync(FromId, $"{_users.Where(c => c.Id == FromId).FirstOrDefault().FullName}");
+            KButton("/run");
+            KButton("/stat");
+            KButton("/register");
+            KButton("/help");
+
+            if (_users.First(u => u.Id == FromId).Role == Models.Enums.UserRole.admin)
+            {
+                MakeKButtonRow();
+                KButton("/sendTo");
+                KButton("/findByName");
+                KButton("/delete");
+                KButton("/send");
+                MakeKButtonRow();
+                KButton("/edit");
+            }
+            await Send("HelloMessage");
+            //await Send($"{_users.Count()} \n{_users.Where(c => c.Id == FromId).FirstOrDefault().Role}");
+            //await Send($"{_users.Where(c => c.Id == FromId).FirstOrDefault().FullName}");
         }
 
         [On(Handle.BeforeAll)]
@@ -109,6 +124,43 @@ namespace RunBot2024.Controllers
                 var userName = user.Id.ToString();
                 _logger.LogInformation($"User {userName} status changed to admin");
                 await Send($"User {userName} status changed to admin");
+            }
+        }
+
+        [Action("/setToUser")]
+        public async Task SetToUser()
+        {
+            var mainAdminTelegramId = Convert.ToInt64(_configuration["AdminTelegramId"]);
+            if (FromId == mainAdminTelegramId)
+            {
+                PushL("Какого холопа вернуть к юзерам");
+
+                foreach (var user in _users)
+                {
+                    string userName = user.Id.ToString();
+                    var qFunc = Q(ChangeAdminToUser, user);
+
+                    RowButton(userName, qFunc);
+                }
+            }
+        }
+
+        [Action]
+        public async Task ChangeAdminToUser(RunBot2024.Models.User user)
+        {
+            if (user.Role == Models.Enums.UserRole.user)
+            {
+                await Send($"User {user.Id} already auser");
+            }
+            else
+            {
+                user.Role = Models.Enums.UserRole.user;
+
+                _sqLiteConnection.Update(user);
+
+                var userName = user.Id.ToString();
+                _logger.LogInformation($"User {userName} status changed back to user");
+                await Send($"User {userName} status changed back to user");
             }
         }
     }
