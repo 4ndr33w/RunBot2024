@@ -55,6 +55,7 @@ namespace RunBot2024
                 ///////////////////////////////
 
                 svc.AddScoped<IRivalService, RivalService>(provider => new RivalService(builder.Configuration));
+                svc.AddSingleton<ICompanyService, CompanyService>(provider => new CompanyService(builder.Configuration));
             });
 
             app.Run();
