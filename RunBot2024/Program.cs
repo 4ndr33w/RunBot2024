@@ -22,6 +22,7 @@ namespace RunBot2024
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddLogging();
 
             var app = builder.Build();
 
@@ -54,8 +55,10 @@ namespace RunBot2024
 
                 ///////////////////////////////
 
+                svc.AddLogging();
                 svc.AddScoped<IRivalService, RivalService>(provider => new RivalService(builder.Configuration));
                 svc.AddSingleton<ICompanyService, CompanyService>(provider => new CompanyService(builder.Configuration));
+                svc.AddScoped<ILogService, LogService>(provider => new LogService(builder.Configuration));
             });
 
             app.Run();

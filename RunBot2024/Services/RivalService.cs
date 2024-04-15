@@ -42,7 +42,9 @@ namespace RunBot2024.Services
                 query.Append($"DELETE FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ");
                 query.Append($"WHERE \"TelegramId\" = {telegramId} LIMIT 1;");
 
+                await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString());
+                await connection.CloseAsync();
 
                 query.Clear();
             }
@@ -56,7 +58,9 @@ namespace RunBot2024.Services
                 query.Append($"DELETE FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ");
                 query.Append($"WHERE \"Name\" = '{name}' LIMIT 1;");
 
+                await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString());
+                await connection.CloseAsync();
 
                 query.Clear();
             }
@@ -66,7 +70,9 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
+                await connection.OpenAsync();
                 var response = await connection.QueryAsync<RivalModel>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\"");
+                await connection.CloseAsync();
                 return response.ToList();
             }
         }
@@ -75,9 +81,11 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
+                await connection.OpenAsync();
                 var response = await connection
                     .QueryAsync<RivalModel>
                     ($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" WHERE \"Id\" = {telegramId}");
+                await connection.CloseAsync();
                 return response.FirstOrDefault();
             }
         }
@@ -86,9 +94,11 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
+                await connection.OpenAsync();
                 var response = await connection
                     .QueryAsync<RivalModel>
                     ($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" WHERE \"Name\" = {name}");
+                await connection.CloseAsync();
                 return response.FirstOrDefault();
             }
         }
@@ -102,7 +112,9 @@ namespace RunBot2024.Services
                 query.Append( $"SET \"Name\" = '{rival.Name}', \"TotalResult\" = {rival.TotalResult}, \"Company\" = '{rival.Company}', \"UpdatedAt\"  = '{rival.UpdatedAt}' " );
                 query.Append($"WHERE \"TelegramId\" = {rival.TelegramId}");
 
+                await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString(), rival);
+                await connection.CloseAsync();
             }
         }
     }

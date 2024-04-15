@@ -13,7 +13,7 @@ namespace RunBot2024.Controllers
     public class RegistrationController : BotController
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger _logger;
+        private readonly ILogger<RegistrationController> _logger;
         private readonly MessageSender _messageSender;
         private IRivalService _rivalService;
         private ICompanyService _companyService;
@@ -27,10 +27,10 @@ namespace RunBot2024.Controllers
         private DateTime registrationStartDate;
         private static DateTime registrationEndDate;
         
-        public RegistrationController (IConfiguration configuration, /*ILogger logger, */MessageSender messageSender, IRivalService rivalService, ICompanyService companyService)
+        public RegistrationController (IConfiguration configuration, ILogger<RegistrationController> logger, MessageSender messageSender, IRivalService rivalService, ICompanyService companyService)
         {
             _configuration = configuration;
-            //_logger = logger;
+            _logger = logger;
             _messageSender = messageSender;
             _rivalService = rivalService;
             _companyService = companyService;
@@ -230,7 +230,7 @@ namespace RunBot2024.Controllers
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, {region}",
+                    text: $"{_name}, вы выбрали {region}",
                     messageId: regionMessage.MessageId,
                     replyMarkup: null
                     );
@@ -260,7 +260,7 @@ namespace RunBot2024.Controllers
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, {selectedCity.CityName}",
+                    text: $"{_name}, вы выбрали {selectedCity.CityName}",
                     messageId: cityMessage.MessageId,
                     replyMarkup: null
                     );
@@ -290,7 +290,7 @@ namespace RunBot2024.Controllers
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, {selectedCompany.CompanyName}",
+                    text: $"{_name}, вы выбрали {selectedCompany.CompanyName}",
                     messageId: companyMessage.MessageId,
                     replyMarkup: null
                     );

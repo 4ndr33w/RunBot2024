@@ -41,8 +41,6 @@ namespace RunBot2024.Controllers
                 KButton("/edit");
             }
             await Send("HelloMessage");
-            //await Send($"{_users.Count()} \n{_users.Where(c => c.Id == FromId).FirstOrDefault().Role}");
-            //await Send($"{_users.Where(c => c.Id == FromId).FirstOrDefault().FullName}");
         }
 
         [On(Handle.BeforeAll)]
