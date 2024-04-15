@@ -18,7 +18,7 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
-                var response = await connection.QueryAsync<City>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["CityListTable"]}\"");
+                var response = await connection.QueryAsync<City>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["CityListTable"]}\";");
                 return response.ToList();
             }
         }
@@ -27,7 +27,7 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
-                var response = await connection.QueryAsync<Company>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["CompanyListTable"]}\"");
+                var response = await connection.QueryAsync<Company>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["CompanyListTable"]}\";");
                 return response.ToList();
             }
         }
@@ -36,7 +36,7 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
-                var response = await connection.QueryAsync<Region>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RegionListTable"]}\"");
+                var response = await connection.QueryAsync<Region>($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RegionListTable"]}\";");
                 return response.ToList();
             }
         }

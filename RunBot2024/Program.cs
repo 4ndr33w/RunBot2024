@@ -21,24 +21,24 @@ namespace RunBot2024
             builder.Services.AddDbContext<NpgDbContext>(op => op.UseNpgsql(connectionString));
 
             // Add services to the container.
-            builder.Services.AddControllers();
+            builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            //if (!app.Environment.IsDevelopment())
-            //{
-            //    app.UseExceptionHandler("/Home/Error");
-            //}
-            //app.UseStaticFiles();
+            //Configure the HTTP request pipeline.
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Home/Error");
+            }
+            app.UseStaticFiles();
 
-            //app.UseRouting();
+            app.UseRouting();
 
-            //app.UseAuthorization();
+            app.UseAuthorization();
 
-            //app.MapControllerRoute(
-            //    name: "default",
-            //    pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             BotfProgram.StartBot(args, onConfigure: (svc, cfg) =>
             {

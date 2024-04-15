@@ -9,8 +9,8 @@ namespace RunBot2024.Models
         private string _cityName;
         private int _regionId;
 
-        public int CityId { get { return _cityId; } set { _cityId = value; } }
+        public int CityId { get { return _cityId; } set => _cityId = value;  }
+        public int RegionId { get { return _regionId; } set => _regionId = value; }
         public string CityName { get { return _cityName; } set => _cityName = value; }
-        public int RegionId { get { return _regionId; } set => RegionId = value; }
     }
 }

@@ -25,7 +25,7 @@ namespace RunBot2024.Services
 
                 query.Append($"INSERT INTO \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ");
                 query.Append($"(\"TelegramId\", \"Name\", \"Company\", \"Gender\", \"Age\", \"TotalResult\", \"CreatedAt\", \"UpdatedAt\") ");
-                query.Append($"VALUES ({rival.TelegramId}, \'{rival.Name}\', \'{rival.Company}\', \'{rival.Gender}\', {rival.Age}, {rival.TotalResult}, \'{rival.CreatedAt}\', {rival.UpdatedAt})");
+                query.Append($"VALUES ({rival.TelegramId}, \'{rival.Name}\', \'{rival.Company}\', \'{rival.Gender}\', {rival.Age}, {rival.TotalResult}, \'{rival.CreatedAt}\', \'{rival.UpdatedAt}\');");
 
                 await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString());

@@ -34,30 +34,17 @@ namespace RunBot2024.Controllers
             _messageSender = messageSender;
             _rivalService = rivalService;
             _companyService = companyService;
-            Initial();
+            //Initial();
         }
 
         [State]
         string _name;
 
-        [State]
-        char _gender;
-
-        [State]
-        int _age;
-
-        [State]
-        string _region;
-
-        [State]
-        string _city;
-
-        [State]
-        string _company;
-
         private async Task Initial()
         {
             _rivalList = await _rivalService.GetAllRivalsAsync();
+            _cityList = await _companyService.GetCityListAsync();
+            _regionList = await _companyService.GetRegionListAsync();
 
             registrationStartDate = Convert.ToDateTime(_configuration["RegistrationStartDate"]);
             registrationEndDate = Convert.ToDateTime(_configuration["RegistrationEndDate"]);
@@ -88,7 +75,7 @@ namespace RunBot2024.Controllers
                 }
                 else
                 {
-                    await Send("При регистрации необходимо указать ваши фамилию и имя, ваш пол и выбрать команду.\nПриступим\n\nВведите ваши фамилию и имя:");
+                    await Send("\nВведите ваши фамилию и имя:");
 
                     var name = await AwaitText();
                     _name = name;
@@ -110,8 +97,8 @@ namespace RunBot2024.Controllers
             var _changeNameButton = InlineKeyboardButton.WithCallbackData(changeNameString, "changeName");
 
             InlineKeyboardButton[][] buttons = new InlineKeyboardButton[2][];
-            buttons[0] = new InlineKeyboardButton[1] { _continueRegistrationButton };
-            buttons[1] = new InlineKeyboardButton[1] { _changeNameButton };
+            buttons[1] = new InlineKeyboardButton[1] { _continueRegistrationButton };
+            buttons[0] = new InlineKeyboardButton[1] { _changeNameButton };
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
 
@@ -150,8 +137,17 @@ namespace RunBot2024.Controllers
         [Action]
         public async Task ContinueRegistration(string name)
         {
-            RivalModel newRival = new RivalModel();
-            newRival.Name = name;
+            try
+            {
+                _cityList = await _companyService.GetCityListAsync();
+                _regionList = await _companyService.GetRegionListAsync();
+                
+                _companyList = await _companyService.GetCompanyListAsync();
+            }
+            catch (Exception)
+            {
+                PushL("Ошибка при загрузке списка регионов.\nПопробуйте позже. Если ошибка повторится - обратитесь к администратору бота или к организаторам проекта.");
+            }
 
             #region выбор пола
 
@@ -172,9 +168,8 @@ namespace RunBot2024.Controllers
             Message genderRequestMessage = await Client
                .SendTextMessageAsync(FromId, $"\n{_name}, укажите ваш пол:\n", ParseMode.Html, default, default, default, default, 0, true, markup);
 
-            var callback = await AwaitQuery();
-
-            newRival.Gender = callback[0];
+            var genderCallback = await AwaitQuery();
+            char gender = genderCallback[0];
 
             await Client.EditMessageTextAsync(
                 chatId: FromId,
@@ -205,13 +200,9 @@ namespace RunBot2024.Controllers
              .SendTextMessageAsync(FromId, $"Возраст введён некорректно. Введите ваш возраст ещё раз (только цифры)", ParseMode.Html, default, default, default, default, 0, true, null);
                 }
             }
-
-            newRival.Age = age;
             #endregion
 
-            #region выбор региона
-
-            _regionList = await _companyService.GetRegionListAsync();
+            #region выбор региона, города, предприятия и сохранение
 
             if (_regionList.Count > 0)
             {
@@ -221,9 +212,7 @@ namespace RunBot2024.Controllers
 
                 foreach (var eachRegion in _regionList)
                 {
-                    var regionName = eachRegion.RegionName;
-
-                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(regionName, $"{eachRegion.RegionId}");
+                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(eachRegion.RegionName, $"{eachRegion.RegionId}");
 
                     regionButtons[i] = new InlineKeyboardButton[1] { _currentRegionButton };
                     i++;
@@ -235,136 +224,127 @@ namespace RunBot2024.Controllers
 
                 var regionCallback = await AwaitQuery();
 
-                string region = _regionList.First(r => r.RegionId == Convert.ToInt32(regionCallback)).RegionName;
+                Region selectedRegion = _regionList.First(r => r.RegionId == Convert.ToInt32(regionCallback));
+
+                string region = selectedRegion.RegionName;
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, выбранный регион: {region}",
+                    text: $"{_name}, {region}",
                     messageId: regionMessage.MessageId,
                     replyMarkup: null
                     );
-            }
-            else
-            {
-                PushL("Ошибка при загрузке списка регионов.\nПопробуйте позже. Если ошибка повторится - обратитесь к администратору бота или к организаторам проекта.");
-            }
-            #endregion
 
-            #region выбор города
-            #endregion
-        }
+                #region выбор города
 
-        [Action]
-        public async Task GenderRequest()
-        {
-            PushL($"\n{_name}, укажите ваш пол:\n");
+                int y = 0;
 
-            string maleGender = "мужчина";
-            string femaleGender = "женщина";
+                List<City> selectedRegionCityList = new List<City>(_cityList.Where(c => c.RegionId == selectedRegion.RegionId).ToList());
 
-            var qMale = Q(RegionRequest, "male");
-            var qFemale = Q(RegionRequest, "female");
+                InlineKeyboardButton[][] cityButtons = new InlineKeyboardButton[selectedRegionCityList.Count][];
 
-            Button(maleGender, qMale);
-            Button(femaleGender, qFemale);
-        }
-
-        [Action]
-        public async Task RegionRequest(string gender)
-        {
-            _regionList = await _companyService.GetRegionListAsync();
-            _gender = gender[0];
-            
-            if (_regionList.Count > 0)
-            {
-                InlineKeyboardButton[][] buttons = new InlineKeyboardButton[_regionList.Count][];
-
-                int i = 0;
-
-                foreach (var regionn in _regionList)
+                foreach (var city in selectedRegionCityList)
                 {
-                    var regionName = regionn.RegionName;
-
-                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(regionName, $"{regionn.RegionId}");
-                    
-                    buttons[i] = new InlineKeyboardButton[1] { _currentRegionButton };
-                    i++;
+                    var _currentCityButton = InlineKeyboardButton.WithCallbackData(city.CityName, $"{city.CityId}");
+                    cityButtons[y] = new InlineKeyboardButton[1] { _currentCityButton };
+                    y++;
                 }
-                InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
+                InlineKeyboardMarkup cityMarkup = new InlineKeyboardMarkup(cityButtons);
 
-                Message sentMessage = await Client
-                    .SendTextMessageAsync(FromId, $"{_name}, выберите регион, в котором находится ваше предприятие:", ParseMode.Html, default, default, default, default, 0, true, markup);
+                Message cityMessage = await Client
+                    .SendTextMessageAsync(FromId, $"{_name}, выберите город, в котором находится ваше предприятие:", ParseMode.Html, default, default, default, default, 0, true, cityMarkup);
 
-                var callback = await AwaitQuery();
+                var cityCallback = await AwaitQuery();
 
-                string region = _regionList.First(r => r.RegionId == Convert.ToInt32(callback)).RegionName;
+                City selectedCity = _cityList.First(c => c.CityId == Convert.ToInt32(cityCallback));
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, выбранный регион: {region}",
-                    messageId: sentMessage.MessageId,
+                    text: $"{_name}, {selectedCity.CityName}",
+                    messageId: cityMessage.MessageId,
+                    replyMarkup: null
+                    );
+                #endregion
+
+                #region выбор предприятия
+
+                int j = 0;
+
+                List<Company> selectedCityCompanies = new List<Company>(_companyList.Where(c => c.CityId == selectedCity.CityId).ToList());
+                InlineKeyboardButton[][] companyButtons = new InlineKeyboardButton[selectedCityCompanies.Count][];
+
+                foreach (var company in selectedCityCompanies)
+                {
+                    var _currentCompanyButton = InlineKeyboardButton.WithCallbackData(company.CompanyName, $"{company.CompanyId}");
+                    companyButtons[j] = new InlineKeyboardButton[1] { _currentCompanyButton };
+                    j++;
+                }
+                InlineKeyboardMarkup companyMarkup = new InlineKeyboardMarkup(companyButtons);
+
+                Message companyMessage = await Client
+                    .SendTextMessageAsync(FromId, $"{_name}, выберите ваше предприятие:", ParseMode.Html, default, default, default, default, 0, true, companyMarkup);
+
+                var companyCallback = await AwaitQuery();
+
+                Company selectedCompany = _companyList.First(c => c.CompanyId == Convert.ToInt32(companyCallback));
+
+                await Client.EditMessageTextAsync(
+                    chatId: FromId,
+                    text: $"{_name}, {selectedCompany.CompanyName}",
+                    messageId: companyMessage.MessageId,
                     replyMarkup: null
                     );
 
-                await CityRequest(region);
+                #endregion
+
+                #region сохранение анкеты участника
+
+                RivalModel newRival = new RivalModel();
+
+                newRival.Name = name;
+                newRival.Gender = gender;
+                newRival.Age = age;
+                newRival.Company = selectedCompany.CompanyName;
+                newRival.CreatedAt = DateTime.UtcNow;
+                newRival.TelegramId = FromId;
+                newRival.TotalResult = 0;
+                newRival.UpdatedAt = DateTime.UtcNow;
+
+                await SaveNewRival(newRival);
+
+                #endregion
             }
             else
             {
                 PushL("Ошибка при загрузке списка регионов.\nПопробуйте позже. Если ошибка повторится - обратитесь к администратору бота или к организаторам проекта.");
             }
+            #endregion
         }
 
         [Action]
-        public async Task CityRequest(string region)
+        public async Task SaveNewRival(RivalModel rival)
         {
-            _region = region;
-            _cityList = await _companyService.GetCityListAsync();
-            Region selectedRegion = _regionList.Where(r => r.RegionName == region).First();
-            if (_cityList.Count > 0)
-            {
-                List<City> cityList = _cityList.Where(c => c.RegionId == selectedRegion.RegionId).ToList();
-                PushL($"\n{_name}, {region}. выберите город, в котором расположено ваше предприятие:\n");
+            var newRival = rival;
+            _rivalList = await _rivalService.GetAllRivalsAsync();
 
-                foreach (var city in cityList)
-                {
-                    var cityName = city.CityName;
-                    //_city = cityName;
-                    var qFunc = Q(CompanyRequest, cityName);
-                    RowButton(cityName, qFunc);
-                }
+            var existingUser = _rivalList.FirstOrDefault(r => r.TelegramId == rival.TelegramId);
+            if (existingUser != null || existingUser != default)
+            {
+                PushL($"Вы уже зарегистрированы как {existingUser.Name}, {existingUser.Company}!");
             }
             else
             {
-                PushL("Ошибка при загрузке списка городов.\nПопробуйте позже. Если ошибка повторится - обратитесь к администратору бота или к организаторам проекта.");
-            }
-        }
-
-        [Action]
-        public async Task CompanyRequest(string city)
-        {
-            _city = city;
-            City selectedCity = _cityList.Where(c => c.CityName == city).First();
-
-            if (_companyList.Count > 0)
-            {
-                List<Company> companyList = _companyList.Where(c => c.CityId == selectedCity.CityId).ToList();
-                PushL($"\n{_name}, выберите ваше предприятие:\n");
-
-                foreach (var company in companyList)
+                try
                 {
-                    var companyName = company.CompanyName;
-                    //_company = companyName;
-                    var qFunc = Q(CompleteRegistration, companyName);
+                    await _rivalService.CreateRivalAsync(rival);
 
-                    RowButton(companyName, qFunc);
+                    await Send($"{rival.Name}, {rival.Company} - вы успешно зарегистрированы!");
+                }
+                catch (Exception)
+                {
+                    await Send("Возникла ошибка при сохранении анкеты");
                 }
             }
-        }
-        [Action]
-        public async Task CompleteRegistration(string company)
-        {
-            _company = company;
-            await Send($"{_name}, {_company}");
         }
     }
 }
