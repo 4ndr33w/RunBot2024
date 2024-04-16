@@ -1,6 +1,7 @@
 ﻿using Deployf.Botf;
 using Microsoft.AspNetCore.Mvc;
 using RunBot2024.Models;
+using RunBot2024.Services.Interfaces;
 using SQLite;
 using Telegram.Bot;
 
@@ -13,14 +14,16 @@ namespace RunBot2024.Controllers
         readonly ILogger<MainBotController> _logger;
         readonly BotfOptions _options;
         readonly IConfiguration _configuration;
+        readonly ILogService _logService;
 
-        public MainBotController(TableQuery<User> users, SQLiteConnection sqLiteConnection, ILogger<MainBotController> logger, BotfOptions options, IConfiguration configuration)
+        public MainBotController(TableQuery<User> users, SQLiteConnection sqLiteConnection, ILogger<MainBotController> logger, BotfOptions options, IConfiguration configuration, ILogService logService)
         {
             _users = users;
             _sqLiteConnection = sqLiteConnection;
             _logger = logger;
             _options = options;
             _configuration = configuration;
+            _logService = logService;
         }
         [Action("/start", "start bot")]
         public async Task Start()
@@ -65,6 +68,14 @@ namespace RunBot2024.Controllers
         public async Task OnException(Exception e)
         {
             _logger.LogError(e, "Unhandled exception");
+
+            ErrorLog errorLog = new ErrorLog();
+            errorLog.ErrorMessage = e.ToString() + "\nUnhandled exception";
+            errorLog.TelegramId = FromId;
+            errorLog.LastUpdated = DateTime.UtcNow;
+
+            await _logService.CreateErrorLogAsync(errorLog);
+
             if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
             {
                 await AnswerCallback($"Error:\n{e}");
