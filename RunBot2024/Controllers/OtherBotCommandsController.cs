@@ -174,7 +174,7 @@ namespace RunBot2024.Controllers
 
                 ReplyLog report = new ReplyLog();
                 report.ReplyMessage = $"(admin) {adminWhoTakeMessage.FullName} to {selectedRival.Name}: " + message;
-                report.TelegramId = FromId;
+                report.TelegramId = selectedRival.TelegramId;
                 report.LastUpdated = DateTime.UtcNow;
 
                 await _logService.CreateReplyLogAsync(report);
