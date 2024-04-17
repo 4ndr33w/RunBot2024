@@ -36,15 +36,15 @@ namespace RunBot2024.Controllers
         [Action("/start", "start bot")]
         public async Task Start()
         {
-            KButton("/run");
+            KButton("/run"); // Done
             KButton("/stat");
-            KButton("/register");
-            KButton("/help");
+            KButton("/register");  // Done
+            KButton("/help"); // Done
 
             if (_users.First(u => u.Id == FromId).Role == Models.Enums.UserRole.admin)
             {
                 MakeKButtonRow();
-                KButton("/sendTo");
+                KButton("/sendTo"); // Done
                 KButton("/findByName");
                 KButton("/delete");
                 KButton("/send");
@@ -194,14 +194,13 @@ namespace RunBot2024.Controllers
                             else if (blackoutTimeSpan.TotalMinutes >= 0)
                             {
                                 resultString.Append($"\nВы на <b>{index}</b> месте из <b>{rivalList.Count}</b>");
+                                resultString.Append($"\n\nДля ознакомления с общей статистикой введите команду /stat");
                             }
-                            resultString.Append($"\n\nДля ознакомления с общей статистикой введите команду /stat");
-
                             await Send(resultString.ToString());
                             resultString.Clear();
 
                             ////////////////////////////////////////////////
-                            ///
+                            
                             var resultLog = new ResultLog();
                             resultLog.TotalResult = existingRival.TotalResult;
                             resultLog.LastAddedResult = currentResult;
