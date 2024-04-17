@@ -56,7 +56,7 @@ namespace RunBot2024.Services
 
                 query.Append($"INSERT INTO \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["ResultLogTable"]}\" ");
                 query.Append($"(\"TelegramId\", \"TotalResult\", \"LastAddedResult\", \"Message\", \"LastUpdated\") ");
-                query.Append($"VALUES ({resultLog.TelegramId}, {resultLog.TotalResult}, {resultLog.LastAddedResult}, \'{resultLog.Message}\', \'{resultLog.LastUpdated}\');");
+                query.Append($"VALUES ({resultLog.TelegramId}, {resultLog.TotalResult.ToString().Replace(',', '.')}, {resultLog.LastAddedResult.ToString().Replace(',', '.')}, \'{resultLog.Message}\', \'{resultLog.LastUpdated}\');");
 
                 await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString());

@@ -107,10 +107,14 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
+                //var resultString = rival.TotalResult.ToString().Replace(',', '.');
+
                 StringBuilder query = new StringBuilder();
-                query.Append($"UPDATE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ");
-                query.Append( $"SET \"Name\" = '{rival.Name}', \"TotalResult\" = {rival.TotalResult}, \"Company\" = '{rival.Company}', \"UpdatedAt\"  = '{rival.UpdatedAt}' " );
-                query.Append($"WHERE \"TelegramId\" = {rival.TelegramId}");
+                query
+                    .Append($"UPDATE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ")
+                    .Append( $"SET \"Name\" = '{rival.Name}', \"TotalResult\" = {rival.TotalResult.ToString().Replace(',', '.')}, " )
+                    .Append($"\"Company\" = '{rival.Company}', \"UpdatedAt\"  = '{rival.UpdatedAt}' ")
+                    .Append($"WHERE \"TelegramId\" = {rival.TelegramId}");
 
                 await connection.OpenAsync();
                 await connection.ExecuteAsync(query.ToString(), rival);

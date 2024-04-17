@@ -138,7 +138,7 @@ namespace RunBot2024.Controllers
                     await Send("Добавление результата тренировки. \nВведите количество километров, которое хотите добавить:");
 
                     var stringResult = await AwaitText();
-                    float currentResult = 0f;
+                    double currentResult = 0;
 
                     try
                     {
@@ -159,9 +159,9 @@ namespace RunBot2024.Controllers
                         var _regex = new Regex(regularPattern);
                         var filteredString = _regex.Match(stringResult).Value;
                         stringResult = filteredString;
-                        currentResult = Convert.ToSingle(stringResult);
+                        currentResult = Convert.ToDouble(stringResult);
 
-                        float minimalAllowedResult = Convert.ToSingle(_configuration["MinimalAllowedResult"]);
+                        double minimalAllowedResult = Convert.ToDouble(_configuration["MinimalAllowedResult"]);
 
                         if (currentResult < minimalAllowedResult)
                         {
@@ -222,14 +222,14 @@ namespace RunBot2024.Controllers
                         PushL("Некорректно введён результат.\nПопробуйте снова ввести команду /run и повторно добавить результат.\n" +
                            "Если проблема повторится, обратитесь к администратору бота");
 
-                        string yesString = "Да, попробовать снова";
-                        string noString = "Отмена";
+                        //string yesString = "Да, попробовать снова";
+                        //string noString = "Отмена";
 
-                        var qAgain = Q(Run);
-                        var qCancel = Q(CancelEnterResult);
+                        //var qAgain = Q(Run);
+                        //var qCancel = Q(CancelEnterResult);
 
-                        RowButton(yesString, qAgain);
-                        RowButton(noString, qCancel);
+                        //RowButton(yesString, qAgain);
+                        //RowButton(noString, qCancel);
                     }
                 }
             }
