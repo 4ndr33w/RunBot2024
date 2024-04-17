@@ -33,6 +33,7 @@ namespace RunBot2024.Controllers
             _logService = logService;
         }
 
+        #region Связь с администратором бота
         [Action("/reply", "Связаться с администратором бота")]
         public async Task Reply()
         {
@@ -79,11 +80,13 @@ namespace RunBot2024.Controllers
 
             await _logService.CreateReplyLogAsync(report);
         }
+        #endregion
 
-        
+
+        #region отправка сообщений конкретному участнику
         [Action("/sendTo")]
         [Authorize("admin")]
-        public async Task Send()
+        public async Task SendTo()
         {
             Push("Отправить сообщение участнику.\nПродолжить?");
 
@@ -200,12 +203,15 @@ namespace RunBot2024.Controllers
             }
         }
 
+        #endregion
+
         [Action]
         public async Task Cancel()
         {
             await Send("Отмена");
         }
 
+        #region показать список юзеров с ролями
         [Action("/getUsers")]
         [Authorize("admin")]
         public async Task GetUsers()
@@ -216,6 +222,8 @@ namespace RunBot2024.Controllers
                 PushL($"{user.FullName} - {user.Role.ToString()}");
             }
         }
+
+        #endregion
 
     }
 }
