@@ -33,7 +33,7 @@ namespace RunBot2024.Controllers
         }
 
         #region start
-        [Action("/start", "start bot")]
+        [Action("/start", "Начало работы бота")]
         public async Task Start()
         {
             KButton("/run"); // Done
@@ -45,13 +45,6 @@ namespace RunBot2024.Controllers
             {
                 MakeKButtonRow();
                 KButton("/Управление"); // Done
-                //MakeKButtonRow();
-                //KButton("/sendTo"); // Done
-                //KButton("/findByName");
-                //KButton("/delete");
-                //KButton("/send"); // Done
-                //MakeKButtonRow();
-                //KButton("/edit");
             }
 
             using (var streamReader = new StreamReader(_configuration["StartMessageTextFile"]))
@@ -118,7 +111,7 @@ namespace RunBot2024.Controllers
             //------------------------------------------
 
             MakeKButtonRow();
-            KButton("/Управление");
+            KButton("/Управление"); // Done
 
             await Send(" Скрыть кнопки управления ");
         }
@@ -300,6 +293,8 @@ namespace RunBot2024.Controllers
 
         #endregion
 
+        #region Methods:  PreHandle / OnException / Unauthorized
+
         [On(Handle.BeforeAll)]
         public void PreHandle()
         {
@@ -347,11 +342,12 @@ namespace RunBot2024.Controllers
         {
             Push("Forbidden");
         }
+        #endregion
 
-        #region test || roleList
+        #region  roleList / adminList
         [Authorize("admin")]
         [Action("/roleList")]
-        public async Task Test()
+        public async Task RoleList()
         {
             var sqLiteUsersList = _users.ToList();
             var userListToString = new StringBuilder();
@@ -361,6 +357,20 @@ namespace RunBot2024.Controllers
                 userListToString.Append($"{item.Id} - {item.FullName} - {item.Role}" + "\n");
             }
             await Send(/*"Authorized"*/userListToString.ToString());
+        }
+
+        [Authorize("admin")]
+        [Action("/adminList")]
+        public async Task AdminList()
+        {
+            var sqLiteUsersList = _users.ToList();
+            var userListToString = new StringBuilder();
+
+            foreach (var item in sqLiteUsersList.Where(x => x.Role == Models.Enums.UserRole.admin))
+            {
+                userListToString.Append($"{item.Id} - {item.FullName} - {item.Role}" + "\n");
+            }
+            await Send(userListToString.ToString());
         }
 
         #endregion
@@ -386,7 +396,7 @@ namespace RunBot2024.Controllers
         }
 
         [Action]
-        public async Task ChangeUserToAdmin(RunBot2024.Models.User user)
+        private async Task ChangeUserToAdmin(RunBot2024.Models.User user)
         {
             if (user.Role == Models.Enums.UserRole.admin)
             {
@@ -427,7 +437,7 @@ namespace RunBot2024.Controllers
         }
 
         [Action]
-        public async Task ChangeAdminToUser(RunBot2024.Models.User user)
+        private async Task ChangeAdminToUser(RunBot2024.Models.User user)
         {
             if (user.Role == Models.Enums.UserRole.user)
             {

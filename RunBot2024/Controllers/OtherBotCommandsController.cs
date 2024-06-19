@@ -33,13 +33,22 @@ namespace RunBot2024.Controllers
         }
 
         #region Связь с администратором бота
+
         [Action("/reply", "Связаться с администратором бота")]
         public async Task Reply()
+        {
+            await Send("Отправить сообщение администратору бота. Продолжить?");
+
+            RowButton("Да, продолжить", Q(ReplyMessage));
+            RowButton("Отмена", Q(Cancel));
+        }
+
+        [Action]
+        private async Task ReplyMessage()
         {
             var users = _users.ToList();
             List<Models.User> admins = users.Where(u => u.Role.ToString() == UserRole.admin.ToString()).ToList();
 
-            await Send("Связь с администратором бота.");
             await Send("Введите сообщение:");
 
             StringBuilder msgSb = new StringBuilder();
@@ -78,6 +87,7 @@ namespace RunBot2024.Controllers
         #endregion
 
         #region отправка сообщений конкретному участнику
+
         [Action("/СообщУчастнику")]
         [Authorize("admin")]
         public async Task SendMessageToRival()
@@ -173,22 +183,6 @@ namespace RunBot2024.Controllers
             catch (Exception e)
             {
                 await SaveErrorLogMethod(e, FromId, adminWhoTakeMessage.FullName, selectedRival.Name);
-                //_logger.LogError(e, "Unhandled exception");
-                //if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
-                //{
-                //    await AnswerCallback($"Error:\n{e}");
-                //}
-                //else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
-                //{
-                //    Push($"Error");
-                //}
-
-                //ErrorLog errorLog = new ErrorLog();
-                //errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения участнику \n{selectedRival.Name} от {adminWhoTakeMessage.FullName}";
-                //errorLog.TelegramId = FromId;
-                //errorLog.LastUpdated = DateTime.UtcNow;
-
-                //await _logService.CreateErrorLogAsync(errorLog);
             }
         }
 
@@ -233,33 +227,102 @@ namespace RunBot2024.Controllers
             catch (Exception e)
             {
                 await SaveErrorLogMethod(e, FromId, adminWhoSendMessage.FullName);
-
-                //_logger.LogError(e, "Unhandled exception");
-                //if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
-                //{
-                //    await AnswerCallback($"Error:\n{e}");
-                //}
-                //else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
-                //{
-                //    Push($"Error");
-                //}
-
-                //ErrorLog errorLog = new ErrorLog();
-                //errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения всем участникам \nот {adminWhoSendMessage.FullName}";
-                //errorLog.TelegramId = FromId;
-                //errorLog.LastUpdated = DateTime.UtcNow;
-
-                //await _logService.CreateErrorLogAsync(errorLog);
             }
         }
 
         #endregion
 
-        [Action]
-        public async Task Cancel()
+        #region Редактирование данных участника
+
+        [Authorize("admin")]
+        [Action("/Редактир")]
+        public async Task Edit()
         {
-            await Send("Отмена");
+            await Send("Редактировать данные профиля участника. Продолжить?");
+
+            RowButton("Да, продолжить", Q(ChooseRivalToEdit));
+            RowButton("Отмена", Q(Cancel));
         }
+
+        [Action]
+        private async Task ChooseRivalToEdit()
+        {
+            try
+            {
+                var rivalList = await _rivalService.GetAllRivalsAsync();
+                var rivalCount = rivalList.Count;
+
+                await Send("Введите имя участника, данные которого требуется отредактировать:");
+
+                string searchRivalName = await AwaitText();
+
+                var selectedRival = rivalList.Where(r => r.Name.ToLower().Contains(searchRivalName.ToLower())).ToList();
+                if (selectedRival.Count == 1)
+                {
+                    await Send($"Редактировать данные участника {selectedRival[0].Name} - {selectedRival[0].Company}");
+                    await EditRivalData(selectedRival[0].TelegramId);
+                }
+                else if (selectedRival.Count > 1)
+                {
+                    PushL("Найдены следующие совпадения:");
+
+                    foreach (var r in selectedRival)
+                    {
+                        var currentRival = $"{r.Name} - {r.Company} - {r.TotalResult}";
+
+                        var qRival = Q(EditRivalData, r.TelegramId);
+
+                        RowButton(currentRival, qRival);
+                    }
+                }
+                else
+                {
+                    PushL("Не найдено ни одного совпадения");
+                }
+            }
+            catch (Exception e)
+            {
+                PushL("Возникла ошибка");
+
+                await SaveErrorLogMethod(e, FromId, null, null);
+            }
+        }
+        private async Task EditRivalData(long telegramId)
+        {
+            PushL("Какие данные участника отредактировать?");
+
+            string changeNameStr = "Изменить имя";
+            string changeCompanyStr = "Изменить команду";
+            string changeResultStr = "Изменить результат";
+
+            var qChangeName = Q(EditRivalName, telegramId);
+            var qChangeCompany = Q(EditRivalCompany, telegramId);
+            var qChangeResult = Q(EditRivalResult, telegramId);
+
+            RowButton (changeNameStr, qChangeName);
+            RowButton(changeCompanyStr, qChangeCompany);
+            RowButton(changeResultStr, qChangeResult);
+        }
+
+        [Action]
+        private async Task EditRivalName(long telegramId)
+        {
+
+        }
+
+        [Action]
+        private async Task EditRivalCompany(long telegramId)
+        {
+
+        }
+
+        [Action]
+        private async Task EditRivalResult(long telegramId)
+        {
+
+        }
+
+        #endregion
 
         #region показать список юзеров с ролями
 
@@ -336,6 +399,15 @@ namespace RunBot2024.Controllers
             report.LastUpdated = DateTime.UtcNow;
 
             await _logService.CreateReplyLogAsync(report);
+        }
+        #endregion
+
+        #region Cancel Method
+
+        [Action]
+        public async Task Cancel()
+        {
+            await Send("Отмена");
         }
         #endregion
     }
