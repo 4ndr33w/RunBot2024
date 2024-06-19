@@ -72,13 +72,13 @@ namespace RunBot2024.Controllers
                     .Push(msgSb.ToString());
                 await _messageSender.Send(msgBuilder);
             }
+            await ReportLogSaveMethod(logMessage.ToString(), FromId, string.Empty, name);
+            //ReplyLog report = new ReplyLog();
+            //report.ReplyMessage = logMessage.ToString();
+            //report.TelegramId = FromId;
+            //report.LastUpdated = DateTime.UtcNow;
 
-            ReplyLog report = new ReplyLog();
-            report.ReplyMessage = logMessage.ToString();
-            report.TelegramId = FromId;
-            report.LastUpdated = DateTime.UtcNow;
-
-            await _logService.CreateReplyLogAsync(report);
+            //await _logService.CreateReplyLogAsync(report);
         }
         #endregion
 
@@ -153,8 +153,6 @@ namespace RunBot2024.Controllers
 
                 await _messageSender.Send(msg);
 
-                
-
                 foreach (var admin in admins)
                 {
                     if (admin.Id != FromId)
@@ -177,12 +175,6 @@ namespace RunBot2024.Controllers
                 }
 
                 await ReportLogSaveMethod(message, selectedRival.TelegramId, adminWhoTakeMessage.FullName, selectedRival.Name);
-                //ReplyLog report = new ReplyLog();
-                //report.ReplyMessage = $"(admin) {adminWhoTakeMessage.FullName} to {selectedRival.Name}: " + message;
-                //report.TelegramId = selectedRival.TelegramId;
-                //report.LastUpdated = DateTime.UtcNow;
-
-                //await _logService.CreateReplyLogAsync(report);
             }
             catch (Exception e)
             {
@@ -224,11 +216,6 @@ namespace RunBot2024.Controllers
         [Action]
         private async Task CompilingMessageToAllRivals()
         {
-            //Загрузить список участников
-            //  Принять сообщение для участников
-            //  В цикле отправить каждому сообщение
-            //  Сохранить в лог
-
             await Send($"Введите сообщение, которое хотите отправить всем участникам:");
             var message = await AwaitText();
 
@@ -249,13 +236,6 @@ namespace RunBot2024.Controllers
                 }
 
                 await ReportLogSaveMethod(message, FromId, adminWhoSendMessage.FullName);
-
-                //ReplyLog report = new ReplyLog();
-                //report.ReplyMessage = $"(admin) {adminWhoSendMessage.FullName} to All Rivals: " + message;
-                //report.TelegramId = FromId;
-                //report.LastUpdated = DateTime.UtcNow;
-
-                //await _logService.CreateReplyLogAsync(report);
             }
             catch (Exception e)
             {
@@ -317,9 +297,18 @@ namespace RunBot2024.Controllers
             {
                 Push($"Error");
             }
+            var firstHalfOfMessage = "";
+            if (selectedRivalName == null)
+            {
+                firstHalfOfMessage = $"\nОшибка при отправке собщения всем участникам \nот ";
+            }
+            else
+            {
+                firstHalfOfMessage = $"\nОшибка при отправке собщения участнику {selectedRivalName} \nот ";
+            }
 
             ErrorLog errorLog = new ErrorLog();
-            errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения всем участникам \nот {adminName}";
+            errorLog.ErrorMessage = e.ToString() + firstHalfOfMessage +  $"{adminName}";
             errorLog.TelegramId = fromId;
             errorLog.LastUpdated = DateTime.UtcNow;
 
@@ -333,8 +322,23 @@ namespace RunBot2024.Controllers
         [Action]
         public async Task ReportLogSaveMethod(string message, long fromId, string adminName, string rivalName = null )
         {
+            var firstHalfOfMessage = "";
+            if (rivalName == null)
+            {
+                firstHalfOfMessage = $"(admin) {adminName} to All Rivals: ";
+            }
+            else
+            {
+                firstHalfOfMessage = $"(admin) {adminName} to {rivalName}: ";
+            }
+
+            if (adminName == string.Empty) // ToDo
+            {
+
+            }
+
             ReplyLog report = new ReplyLog();
-            report.ReplyMessage = $"(admin) {adminName} to All Rivals: " + message;
+            report.ReplyMessage = firstHalfOfMessage + message;
             report.TelegramId = fromId;
             report.LastUpdated = DateTime.UtcNow;
 

@@ -49,7 +49,7 @@ namespace RunBot2024.Controllers
                 //KButton("/sendTo"); // Done
                 //KButton("/findByName");
                 //KButton("/delete");
-                //KButton("/send");
+                //KButton("/send"); // Done
                 //MakeKButtonRow();
                 //KButton("/edit");
             }
@@ -77,7 +77,7 @@ namespace RunBot2024.Controllers
         #region Отобразить кнопки управления
 
         [Authorize("admin")]
-        [Action("/Управление")/*, Authorize("admin")*/]
+        [Action("/Управление")]
         public async Task ShowControlButton()
         {
             //------------------------------------------
@@ -89,7 +89,7 @@ namespace RunBot2024.Controllers
 
             MakeKButtonRow();
             KButton("/СообщУчастнику"); // Done
-            KButton("/СообщВсем");
+            KButton("/СообщВсем"); // Done
 
             MakeKButtonRow();
             KButton("/Редактир");
