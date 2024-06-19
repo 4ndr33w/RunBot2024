@@ -4,7 +4,6 @@ using RunBot2024.Models.Enums;
 using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.Text;
-using Telegram.Bot.Types;
 
 namespace RunBot2024.Controllers
 {
@@ -62,6 +61,7 @@ namespace RunBot2024.Controllers
                 name = Context.GetUserFullName == null ? FromId.ToString() : Context.GetUserFullName();
                 msgSb.AppendLine($"Сообщение от {name} - {FromId}, Участник не зарегистрирован:\n");
             }
+            var logMessageShort = $"{message}";
             logMessage.Append($"{name}: {message}");
             msgSb.AppendLine(message);
 
@@ -72,16 +72,10 @@ namespace RunBot2024.Controllers
                     .Push(msgSb.ToString());
                 await _messageSender.Send(msgBuilder);
             }
-            await ReportLogSaveMethod(logMessage.ToString(), FromId, string.Empty, name);
-            //ReplyLog report = new ReplyLog();
-            //report.ReplyMessage = logMessage.ToString();
-            //report.TelegramId = FromId;
-            //report.LastUpdated = DateTime.UtcNow;
-
-            //await _logService.CreateReplyLogAsync(report);
+            var userData = $"{name} - {existingRival.Company}";
+            await ReportLogSaveMethod(logMessageShort, FromId, null, userData);
         }
         #endregion
-
 
         #region отправка сообщений конкретному участнику
         [Action("/СообщУчастнику")]
@@ -199,7 +193,6 @@ namespace RunBot2024.Controllers
         }
 
         #endregion
-
 
         #region отправка сообщения всем участникам
 
@@ -320,7 +313,7 @@ namespace RunBot2024.Controllers
         #region Сохранение лога сообщений
 
         [Action]
-        public async Task ReportLogSaveMethod(string message, long fromId, string adminName, string rivalName = null )
+        public async Task ReportLogSaveMethod(string message, long fromId, string adminName = null, string rivalName = null )
         {
             var firstHalfOfMessage = "";
             if (rivalName == null)
@@ -332,9 +325,9 @@ namespace RunBot2024.Controllers
                 firstHalfOfMessage = $"(admin) {adminName} to {rivalName}: ";
             }
 
-            if (adminName == string.Empty) // ToDo
+            if (adminName == null)
             {
-
+                firstHalfOfMessage = $"Сообщение администратору от {rivalName}: ";
             }
 
             ReplyLog report = new ReplyLog();
