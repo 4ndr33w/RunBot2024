@@ -4,12 +4,13 @@ using RunBot2024.Models.Enums;
 using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.Text;
+using Telegram.Bot.Types;
 
 namespace RunBot2024.Controllers
 {
     public class OtherBotCommandsController : BotController
     {
-        readonly TableQuery<User> _users;
+        readonly TableQuery<Models.User> _users;
         readonly SQLiteConnection _sqLiteConnection;
         readonly ILogger<OtherBotCommandsController> _logger;
         readonly BotfOptions _options;
@@ -20,7 +21,7 @@ namespace RunBot2024.Controllers
 
         private List<RivalModel> _rivalList;
 
-        public OtherBotCommandsController(TableQuery<User> users, SQLiteConnection sqLiteConnection, ILogger<OtherBotCommandsController> logger, BotfOptions options, IConfiguration configuration, IRivalService rivalService, MessageSender messageSender, ILogService logService)
+        public OtherBotCommandsController(TableQuery<Models.User> users, SQLiteConnection sqLiteConnection, ILogger<OtherBotCommandsController> logger, BotfOptions options, IConfiguration configuration, IRivalService rivalService, MessageSender messageSender, ILogService logService)
         {
             _users = users;
             _sqLiteConnection = sqLiteConnection;
@@ -37,7 +38,7 @@ namespace RunBot2024.Controllers
         public async Task Reply()
         {
             var users = _users.ToList();
-            List<User> admins = users.Where(u => u.Role.ToString() == UserRole.admin.ToString()).ToList();
+            List<Models.User> admins = users.Where(u => u.Role.ToString() == UserRole.admin.ToString()).ToList();
 
             await Send("Связь с администратором бота.");
             await Send("Введите сообщение:");
@@ -85,12 +86,12 @@ namespace RunBot2024.Controllers
         #region отправка сообщений конкретному участнику
         [Action("/СообщУчастнику")]
         [Authorize("admin")]
-        public async Task SendTo()
+        public async Task SendMessageToRival()
         {
             Push("Отправить сообщение участнику.\nПродолжить?");
 
-            RowButton("Отмена", Q(Cancel));
             RowButton("Да, отправить сообщение участнику", Q(ChooseRivalToSendMessage));
+            RowButton("Отмена", Q(Cancel));
         }
 
         [Action]
@@ -134,7 +135,7 @@ namespace RunBot2024.Controllers
             var admins = _users.ToList().Where(u => u.Role.ToString() == UserRole.admin.ToString());
             var adminWhoTakeMessage = admins.First(c => c.Id == FromId);
 
-            var mainAdmin = new User();
+            var mainAdmin = new Models.User();
             mainAdmin.FullName = "Я";
             mainAdmin.Id = Convert.ToInt64(_configuration["AdminTelegramId"]);
             var rivalList = await _rivalService.GetAllRivalsAsync();
@@ -175,31 +176,107 @@ namespace RunBot2024.Controllers
                     await _messageSender.Send(mainAdminAnswer);
                 }
 
-                ReplyLog report = new ReplyLog();
-                report.ReplyMessage = $"(admin) {adminWhoTakeMessage.FullName} to {selectedRival.Name}: " + message;
-                report.TelegramId = selectedRival.TelegramId;
-                report.LastUpdated = DateTime.UtcNow;
+                await ReportLogSaveMethod(message, selectedRival.TelegramId, adminWhoTakeMessage.FullName, selectedRival.Name);
+                //ReplyLog report = new ReplyLog();
+                //report.ReplyMessage = $"(admin) {adminWhoTakeMessage.FullName} to {selectedRival.Name}: " + message;
+                //report.TelegramId = selectedRival.TelegramId;
+                //report.LastUpdated = DateTime.UtcNow;
 
-                await _logService.CreateReplyLogAsync(report);
+                //await _logService.CreateReplyLogAsync(report);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unhandled exception");
-                if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+                await SaveErrorLogMethod(e, FromId, adminWhoTakeMessage.FullName, selectedRival.Name);
+                //_logger.LogError(e, "Unhandled exception");
+                //if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+                //{
+                //    await AnswerCallback($"Error:\n{e}");
+                //}
+                //else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+                //{
+                //    Push($"Error");
+                //}
+
+                //ErrorLog errorLog = new ErrorLog();
+                //errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения участнику \n{selectedRival.Name} от {adminWhoTakeMessage.FullName}";
+                //errorLog.TelegramId = FromId;
+                //errorLog.LastUpdated = DateTime.UtcNow;
+
+                //await _logService.CreateErrorLogAsync(errorLog);
+            }
+        }
+
+        #endregion
+
+
+        #region отправка сообщения всем участникам
+
+        [Authorize("admin")]
+        [Action("/СообщВсем")]
+        public async Task SendMessageToAllRivals()
+        {
+            Push("Отправить сообщение всем участникам.\nПродолжить?");
+
+            RowButton("Да, продолжить", Q(CompilingMessageToAllRivals));
+            RowButton("отмена", Q(Cancel));
+        }
+
+        [Action]
+        private async Task CompilingMessageToAllRivals()
+        {
+            //Загрузить список участников
+            //  Принять сообщение для участников
+            //  В цикле отправить каждому сообщение
+            //  Сохранить в лог
+
+            await Send($"Введите сообщение, которое хотите отправить всем участникам:");
+            var message = await AwaitText();
+
+            var rivalList = await _rivalService.GetAllRivalsAsync();
+
+            var admins = _users.ToList().Where(u => u.Role.ToString() == UserRole.admin.ToString());
+            var adminWhoSendMessage = admins.First(c => c.Id == FromId);
+
+            try
+            {
+                foreach (var rival in rivalList)
                 {
-                    await AnswerCallback($"Error:\n{e}");
-                }
-                else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
-                {
-                    Push($"Error");
+                    var msg = new MessageBuilder()
+                   .SetChatId(rival.TelegramId)
+                   .Push("Сообщение всем участникам:\n" + message);
+
+                    await _messageSender.Send(msg);
                 }
 
-                ErrorLog errorLog = new ErrorLog();
-                errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения участнику \n{selectedRival.Name} от {adminWhoTakeMessage.FullName}";
-                errorLog.TelegramId = FromId;
-                errorLog.LastUpdated = DateTime.UtcNow;
+                await ReportLogSaveMethod(message, FromId, adminWhoSendMessage.FullName);
 
-                await _logService.CreateErrorLogAsync(errorLog);
+                //ReplyLog report = new ReplyLog();
+                //report.ReplyMessage = $"(admin) {adminWhoSendMessage.FullName} to All Rivals: " + message;
+                //report.TelegramId = FromId;
+                //report.LastUpdated = DateTime.UtcNow;
+
+                //await _logService.CreateReplyLogAsync(report);
+            }
+            catch (Exception e)
+            {
+                await SaveErrorLogMethod(e, FromId, adminWhoSendMessage.FullName);
+
+                //_logger.LogError(e, "Unhandled exception");
+                //if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+                //{
+                //    await AnswerCallback($"Error:\n{e}");
+                //}
+                //else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+                //{
+                //    Push($"Error");
+                //}
+
+                //ErrorLog errorLog = new ErrorLog();
+                //errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения всем участникам \nот {adminWhoSendMessage.FullName}";
+                //errorLog.TelegramId = FromId;
+                //errorLog.LastUpdated = DateTime.UtcNow;
+
+                //await _logService.CreateErrorLogAsync(errorLog);
             }
         }
 
@@ -226,5 +303,43 @@ namespace RunBot2024.Controllers
 
         #endregion
 
+        #region Сохранение лога ошибок
+
+        [Action]
+        public async Task SaveErrorLogMethod(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        {
+            _logger.LogError(e, "Unhandled exception");
+            if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+            {
+                await AnswerCallback($"Error:\n{e}");
+            }
+            else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            {
+                Push($"Error");
+            }
+
+            ErrorLog errorLog = new ErrorLog();
+            errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения всем участникам \nот {adminName}";
+            errorLog.TelegramId = fromId;
+            errorLog.LastUpdated = DateTime.UtcNow;
+
+            await _logService.CreateErrorLogAsync(errorLog);
+        }
+
+        #endregion
+
+        #region Сохранение лога сообщений
+
+        [Action]
+        public async Task ReportLogSaveMethod(string message, long fromId, string adminName, string rivalName = null )
+        {
+            ReplyLog report = new ReplyLog();
+            report.ReplyMessage = $"(admin) {adminName} to All Rivals: " + message;
+            report.TelegramId = fromId;
+            report.LastUpdated = DateTime.UtcNow;
+
+            await _logService.CreateReplyLogAsync(report);
+        }
+        #endregion
     }
 }

@@ -358,7 +358,7 @@ namespace RunBot2024.Controllers
 
             foreach (var item in sqLiteUsersList)
             {
-                userListToString.Append($"{item.FullName} - {item.Role}" + "\n");
+                userListToString.Append($"{item.Id} - {item.FullName} - {item.Role}" + "\n");
             }
             await Send(/*"Authorized"*/userListToString.ToString());
         }
