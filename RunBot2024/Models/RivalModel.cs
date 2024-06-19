@@ -4,7 +4,6 @@ namespace RunBot2024.Models
 {
     public class RivalModel
     {
-        [Key]
         private int _id;
         private long _telegramId;
         private string _name;
@@ -15,6 +14,7 @@ namespace RunBot2024.Models
         private DateTime _createdAt;
         private DateTime _updatedAt;
 
+        [Key]
         public int Id { get { return _id; } set { _id = value; } }
         public long TelegramId { get { return _telegramId; } set { _telegramId = value; } }
         public string Name { get { return _name; } set { _name = value; } }

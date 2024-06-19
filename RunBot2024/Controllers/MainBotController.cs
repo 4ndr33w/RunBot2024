@@ -44,12 +44,14 @@ namespace RunBot2024.Controllers
             if (_users.First(u => u.Id == FromId).Role == Models.Enums.UserRole.admin)
             {
                 MakeKButtonRow();
-                KButton("/sendTo"); // Done
-                KButton("/findByName");
-                KButton("/delete");
-                KButton("/send");
-                MakeKButtonRow();
-                KButton("/edit");
+                KButton("/Управление"); // Done
+                //MakeKButtonRow();
+                //KButton("/sendTo"); // Done
+                //KButton("/findByName");
+                //KButton("/delete");
+                //KButton("/send");
+                //MakeKButtonRow();
+                //KButton("/edit");
             }
 
             using (var streamReader = new StreamReader(_configuration["StartMessageTextFile"]))
@@ -68,6 +70,60 @@ namespace RunBot2024.Controllers
             }
             //await Send("HelloMessage");
         }
+        #endregion
+
+        #region Кнопки управления админа
+
+        #region Отобразить кнопки управления
+
+        [Authorize("admin")]
+        [Action("/Управление")/*, Authorize("admin")*/]
+        public async Task ShowControlButton()
+        {
+            //------------------------------------------
+            KButton("/run"); // Done
+            KButton("/stat");
+            KButton("/register");  // Done
+            KButton("/help"); // Done
+            //------------------------------------------
+
+            MakeKButtonRow();
+            KButton("/СообщУчастнику"); // Done
+            KButton("/СообщВсем");
+
+            MakeKButtonRow();
+            KButton("/Редактир");
+            KButton("/Удалить");
+
+            MakeKButtonRow();
+            KButton("/ПоискПоИмени");
+
+            MakeKButtonRow();
+            KButton("/СкрытьКнопки"); // Done
+
+            await Send(" Отобразить кнопки управления ");
+        }
+        #endregion
+
+        #region Скрыть кнопки управления
+        [Authorize("admin")]
+        [Action("/СкрытьКнопки")/*, Authorize("admin")*/]
+        public async Task HideControlButtons()
+        {
+            //------------------------------------------
+            KButton("/run"); // Done
+            KButton("/stat");
+            KButton("/register");  // Done
+            KButton("/help"); // Done
+            //------------------------------------------
+
+            MakeKButtonRow();
+            KButton("/Управление");
+
+            await Send(" Скрыть кнопки управления ");
+        }
+        #endregion
+
         #endregion
 
         #region help
@@ -109,8 +165,6 @@ namespace RunBot2024.Controllers
 
             TimeSpan timeSpanToEventEnd = eventEndDate - nowDate;
             TimeSpan timeSpanToEventStart = eventStartDate - nowDate;
-
-            
 
             if (existingRival != null || existingRival != default)
             {
@@ -232,6 +286,10 @@ namespace RunBot2024.Controllers
                     }
                 }
             }
+            else
+            {
+                PushL($"Вы не зарегистрированы.");
+            }
         }
 
         [Action]
@@ -252,11 +310,13 @@ namespace RunBot2024.Controllers
                     Id = FromId,
                     FullName = Context!.GetUserFullName(),
                     UserName = Context!.GetUsername()!,
-                    Role = Models.Enums.UserRole.user
+                    Role = Models.Enums.UserRole.user,
+                    Created = DateTime.Now, 
+                    Updated = DateTime.Now
                 };
                 
                 _sqLiteConnection.Insert(user);
-                _logger.LogInformation($"Added new user: {FromId}");
+                _logger.LogInformation($"Added new user: {FromId}, {Context!.GetUserFullName()}");
             }
         }
 
@@ -288,12 +348,19 @@ namespace RunBot2024.Controllers
             Push("Forbidden");
         }
 
-        #region test
-        [Action("/test")]
+        #region test || roleList
         [Authorize("admin")]
+        [Action("/roleList")]
         public async Task Test()
         {
-            await Send("Authorized");
+            var sqLiteUsersList = _users.ToList();
+            var userListToString = new StringBuilder();
+
+            foreach (var item in sqLiteUsersList)
+            {
+                userListToString.Append($"{item.FullName} - {item.Role}" + "\n");
+            }
+            await Send(/*"Authorized"*/userListToString.ToString());
         }
 
         #endregion
@@ -310,7 +377,7 @@ namespace RunBot2024.Controllers
 
                 foreach (var user in _users)
                 {
-                    string userName = user.Id.ToString();
+                    string userName = user.Id.ToString() + " - " + user.FullName;
                     var qFunc = Q(ChangeUserToAdmin, user);
 
                     RowButton(userName, qFunc);
@@ -347,11 +414,11 @@ namespace RunBot2024.Controllers
             var mainAdminTelegramId = Convert.ToInt64(_configuration["AdminTelegramId"]);
             if (FromId == mainAdminTelegramId)
             {
-                PushL("Какого холопа вернуть к юзерам");
+                PushL("Кого вернуть в холопы к юзерам?");
 
                 foreach (var user in _users)
                 {
-                    string userName = user.Id.ToString();
+                    string userName = user.Id.ToString() + " " + user.FullName;
                     var qFunc = Q(ChangeAdminToUser, user);
 
                     RowButton(userName, qFunc);
@@ -364,7 +431,7 @@ namespace RunBot2024.Controllers
         {
             if (user.Role == Models.Enums.UserRole.user)
             {
-                await Send($"User {user.Id} already auser");
+                await Send($"User {user.Id} already DownShifted to user");
             }
             else
             {

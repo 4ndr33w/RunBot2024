@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RunBot2024.DbContexts;
@@ -11,9 +12,11 @@ using RunBot2024.DbContexts;
 namespace RunBot2024.Migrations
 {
     [DbContext(typeof(NpgDbContext))]
-    partial class NpgDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240617120547_ReCreateTables")]
+    partial class ReCreateTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

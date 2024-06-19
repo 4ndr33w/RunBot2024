@@ -2,9 +2,7 @@
 using RunBot2024.Services.Interfaces;
 using Npgsql;
 using System.Text;
-using Telegram.Bot.Types;
 using Dapper;
-using System.Xml.Linq;
 
 namespace RunBot2024.Services
 {
@@ -107,8 +105,6 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
-                //var resultString = rival.TotalResult.ToString().Replace(',', '.');
-
                 StringBuilder query = new StringBuilder();
                 query
                     .Append($"UPDATE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ")

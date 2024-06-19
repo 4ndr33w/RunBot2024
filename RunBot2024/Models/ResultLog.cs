@@ -5,8 +5,6 @@ namespace RunBot2024.Models
 {
     public class ResultLog
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         private int _id;
         private string _message;
         private long _telegramId;
@@ -14,6 +12,8 @@ namespace RunBot2024.Models
         private double _lastAddedResult;
         private DateTime _lastUpdated;
 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get => _id; set => _id = value; }
         public string Message { get => _message; set => _message = value; }
         public long TelegramId { get => _telegramId; set => _telegramId = value; }

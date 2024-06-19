@@ -1,8 +1,6 @@
 ﻿using Deployf.Botf;
-using Microsoft.AspNetCore.Mvc;
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
-using System.Xml.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -39,7 +37,6 @@ namespace RunBot2024.Controllers
 
         [State]
         string _name;
-
         private async Task Initial()
         {
             _rivalList = await _rivalService.GetAllRivalsAsync();
@@ -96,6 +93,21 @@ namespace RunBot2024.Controllers
             var _continueRegistrationButton = InlineKeyboardButton.WithCallbackData(continueRegistrationString, "continue");
             var _changeNameButton = InlineKeyboardButton.WithCallbackData(changeNameString, "changeName");
 
+            //-----------------------------------------------------------------------------------
+            //  Пришлось обращаться к TelegramBotClient'у, а не делать через Botf, 
+            //  отрисовывая кнопки через InlineKeyboardMarkup
+            //  так как при выборе кнопки "изменить имя" кнопки, отрисованные через Botf (Button(Q))
+            //  съезжали вверх и отрисовывались над сообщениями с каждым нажатием на кнопку "изменить имя"
+            //  Проблему удалось исправить через InlineKeyboardMarkup
+            //-----------------------------------------------------------------------------------
+
+            //-----------------------------------------------------------------------------------
+            //  В дальнейшем коде этого контроллера решил продолжить использовать InlineKeyboardMarkup
+            //  просто для практики.
+            //  При выборе предприятия, региона и города в целом можно использовать
+            //  стандартную для Botf 'Button(Q)'
+            //-----------------------------------------------------------------------------------
+
             InlineKeyboardButton[][] buttons = new InlineKeyboardButton[2][];
             buttons[1] = new InlineKeyboardButton[1] { _continueRegistrationButton };
             buttons[0] = new InlineKeyboardButton[1] { _changeNameButton };
@@ -116,7 +128,6 @@ namespace RunBot2024.Controllers
 
             if (callback.ToString() == "continue")
             {
-                //await GenderRequest();
                 await ContinueRegistration(_name);
             }
             else if (callback.ToString() == "changeName")

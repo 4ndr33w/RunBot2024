@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Microsoft.Extensions.Configuration;
 using Npgsql;
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;

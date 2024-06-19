@@ -75,19 +75,6 @@ namespace RunBot2024.DbContexts
                 e.ToTable(_configuration["CompanyListTable"]);
                 e.HasKey(e => e.CompanyId);
             });
-
         }
     }
 }
-
-/*
-  "PostgreDefaultSchema": "RunBot2024",
-  "CityListTable": "CityList",
-  "RegionListTable": "RegionList",
-  "CompanyListTable": "CompanyList",
-  "RivalTable": "RivalList",
-  "ErrorLogTable": "ErrorLog",
-  "ReportLogTable": "ReportLog",
-  "ResultLogTable": "ResultLog",
-  "UserTable": "UserRoles"
- * */

@@ -1,6 +1,4 @@
 ﻿using Deployf.Botf;
-using Microsoft.AspNetCore.Mvc;
-using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 
 namespace RunBot2024.Controllers
@@ -8,16 +6,12 @@ namespace RunBot2024.Controllers
     public class TestController : BotController
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger _logger;
         private readonly IRivalService _rivalService;
-        private List<RivalModel> _users;
 
-        public TestController(IConfiguration configuration, /*ILogger logger, */IRivalService rivalService/*, List<RivalModel> users*/)
+        public TestController(IConfiguration configuration, IRivalService rivalService)
         {
             _configuration = configuration;
-            //_logger = logger;
             _rivalService = rivalService;
-            //_users = users;
         }
 
         [Action("/getAll")]

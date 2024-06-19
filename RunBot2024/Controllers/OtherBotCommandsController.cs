@@ -1,5 +1,4 @@
 ﻿using Deployf.Botf;
-using Microsoft.AspNetCore.Mvc;
 using RunBot2024.Models;
 using RunBot2024.Models.Enums;
 using RunBot2024.Services.Interfaces;
@@ -84,18 +83,18 @@ namespace RunBot2024.Controllers
 
 
         #region отправка сообщений конкретному участнику
-        [Action("/sendTo")]
+        [Action("/СообщУчастнику")]
         [Authorize("admin")]
         public async Task SendTo()
         {
             Push("Отправить сообщение участнику.\nПродолжить?");
 
-            RowButton("Нет, не отправлять", Q(Cancel));
-            RowButton("Да, отправить сообщение участнику", Q(SendMessageToRival));
+            RowButton("Отмена", Q(Cancel));
+            RowButton("Да, отправить сообщение участнику", Q(ChooseRivalToSendMessage));
         }
 
         [Action]
-        public async Task SendMessageToRival()
+        private async Task ChooseRivalToSendMessage()
         {
             _rivalList = await _rivalService.GetAllRivalsAsync();
 
@@ -130,18 +129,19 @@ namespace RunBot2024.Controllers
         }
 
         [Action]
-        public async Task SendMessageToSelectedRivalAsync(long telegramId)
+        private async Task SendMessageToSelectedRivalAsync(long telegramId)
         {
             var admins = _users.ToList().Where(u => u.Role.ToString() == UserRole.admin.ToString());
+            var adminWhoTakeMessage = admins.First(c => c.Id == FromId);
 
             var mainAdmin = new User();
             mainAdmin.FullName = "Я";
             mainAdmin.Id = Convert.ToInt64(_configuration["AdminTelegramId"]);
+            var rivalList = await _rivalService.GetAllRivalsAsync();
+            var selectedRival = rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
 
             try
             {
-                var rivalList = await _rivalService.GetAllRivalsAsync();
-                var selectedRival = rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
                 await Send($"Введите сообщение, которое хотите отправить участнику {selectedRival.Name}:");
 
                 var message = await AwaitText();
@@ -152,7 +152,7 @@ namespace RunBot2024.Controllers
 
                 await _messageSender.Send(msg);
 
-                var adminWhoTakeMessage = admins.First(c => c.Id == FromId);
+                
 
                 foreach (var admin in admins)
                 {
@@ -195,7 +195,7 @@ namespace RunBot2024.Controllers
                 }
 
                 ErrorLog errorLog = new ErrorLog();
-                errorLog.ErrorMessage = e.ToString() + "\nОшибка при отправле собщения участнику";
+                errorLog.ErrorMessage = e.ToString() + $"\nОшибка при отправле собщения участнику \n{selectedRival.Name} от {adminWhoTakeMessage.FullName}";
                 errorLog.TelegramId = FromId;
                 errorLog.LastUpdated = DateTime.UtcNow;
 
@@ -212,6 +212,7 @@ namespace RunBot2024.Controllers
         }
 
         #region показать список юзеров с ролями
+
         [Action("/getUsers")]
         [Authorize("admin")]
         public async Task GetUsers()
