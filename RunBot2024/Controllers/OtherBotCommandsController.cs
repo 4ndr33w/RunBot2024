@@ -3,6 +3,7 @@ using RunBot2024.Models;
 using RunBot2024.Models.Enums;
 using RunBot2024.Services.Interfaces;
 using SQLite;
+using System.IO;
 using System.Text;
 
 namespace RunBot2024.Controllers
@@ -56,8 +57,8 @@ namespace RunBot2024.Controllers
 
             var message = await AwaitText();
 
-            var rivals = await _rivalService.GetAllRivalsAsync();
-            var existingRival = rivals.ToList().Where(r => r.TelegramId == FromId).FirstOrDefault();
+            //var rivals = await _rivalService.GetAllRivalsAsync();
+            var existingRival = await _rivalService.GetRivalByIdAsync(FromId); //rivals.ToList().Where(r => r.TelegramId == FromId).FirstOrDefault();
             string name = "";
 
             if (existingRival != null || existingRival != default)
@@ -140,10 +141,10 @@ namespace RunBot2024.Controllers
             var adminWhoTakeMessage = admins.First(c => c.Id == FromId);
 
             var mainAdmin = new Models.User();
-            mainAdmin.FullName = "Я";
+            mainAdmin.FullName = _configuration["MainAdminName"];
             mainAdmin.Id = Convert.ToInt64(_configuration["AdminTelegramId"]);
-            var rivalList = await _rivalService.GetAllRivalsAsync();
-            var selectedRival = rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
+            //var rivalList = await _rivalService.GetAllRivalsAsync();
+            var selectedRival = await _rivalService.GetRivalByIdAsync(telegramId);//rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
 
             try
             {
@@ -217,7 +218,7 @@ namespace RunBot2024.Controllers
                 {
                     var msg = new MessageBuilder()
                    .SetChatId(rival.TelegramId)
-                   .Push("Сообщение всем участникам:\n" + message);
+                   .Push(message);
 
                     await _messageSender.Send(msg);
                 }
@@ -232,94 +233,68 @@ namespace RunBot2024.Controllers
 
         #endregion
 
-        #region Редактирование данных участника
+        #region удаление участника
 
         [Authorize("admin")]
-        [Action("/Редактир")]
-        public async Task Edit()
+        [Action("/Удалить")]
+        public async Task Delete()
         {
-            await Send("Редактировать данные профиля участника. Продолжить?");
+            Push("Удаление данных участника.\nПродолжить?");
 
-            RowButton("Да, продолжить", Q(ChooseRivalToEdit));
+            RowButton("Да, продолжить", Q(ChooseRivalToDelete));
             RowButton("Отмена", Q(Cancel));
         }
 
         [Action]
-        private async Task ChooseRivalToEdit()
+        private async Task ChooseRivalToDelete()
+        {
+            await Send("Кого удалить?");
+            var removingName = await AwaitText();
+
+            var rivalList = await _rivalService.GetAllRivalsAsync();
+            var matchedRivals = rivalList.Where(x => x.Name.ToLower().Contains(removingName.ToLower())).ToList();
+
+            if (matchedRivals.Count == 1)
+            {
+                await Send($"Удаляются данные участника {matchedRivals[0].Name} - {matchedRivals[0].Company}");
+                await FinishDeleting(matchedRivals[0]);
+            }
+            else if (matchedRivals.Count > 1)
+            {
+                PushL("Найдены следующие совпадения:");
+
+                foreach (var rival in matchedRivals)
+                {
+                    string currentRival = $"{rival.Name} - {rival.Company} - {rival.TotalResult}";
+
+                    var qRival = Q(FinishDeleting, rival);
+
+                    RowButton(currentRival, qRival);
+                }
+            }
+        }
+
+        [Action]
+        private async Task FinishDeleting(RivalModel rival)
         {
             try
             {
-                var rivalList = await _rivalService.GetAllRivalsAsync();
-                var rivalCount = rivalList.Count;
+                var result = await _rivalService.DeleteRivalByIdAsync(rival.TelegramId);
 
-                await Send("Введите имя участника, данные которого требуется отредактировать:");
-
-                string searchRivalName = await AwaitText();
-
-                var selectedRival = rivalList.Where(r => r.Name.ToLower().Contains(searchRivalName.ToLower())).ToList();
-                if (selectedRival.Count == 1)
+                if (result)
                 {
-                    await Send($"Редактировать данные участника {selectedRival[0].Name} - {selectedRival[0].Company}");
-                    await EditRivalData(selectedRival[0].TelegramId);
-                }
-                else if (selectedRival.Count > 1)
-                {
-                    PushL("Найдены следующие совпадения:");
-
-                    foreach (var r in selectedRival)
-                    {
-                        var currentRival = $"{r.Name} - {r.Company} - {r.TotalResult}";
-
-                        var qRival = Q(EditRivalData, r.TelegramId);
-
-                        RowButton(currentRival, qRival);
-                    }
+                    await Send($"Участник {rival.Name} - {rival.Company} успешно удалён из списка.");
                 }
                 else
                 {
-                    PushL("Не найдено ни одного совпадения");
+                    throw new Exception($"ошибка при удалении участника {rival.Name} - {rival.Company}");   
                 }
             }
             catch (Exception e)
             {
-                PushL("Возникла ошибка");
-
-                await SaveErrorLogMethod(e, FromId, null, null);
+                var admin = _users.First(x => x.Id == FromId);
+                await SaveErrorLogMethod(e, rival.TelegramId, admin.FullName, rival.Name);
             }
-        }
-        private async Task EditRivalData(long telegramId)
-        {
-            PushL("Какие данные участника отредактировать?");
-
-            string changeNameStr = "Изменить имя";
-            string changeCompanyStr = "Изменить команду";
-            string changeResultStr = "Изменить результат";
-
-            var qChangeName = Q(EditRivalName, telegramId);
-            var qChangeCompany = Q(EditRivalCompany, telegramId);
-            var qChangeResult = Q(EditRivalResult, telegramId);
-
-            RowButton (changeNameStr, qChangeName);
-            RowButton(changeCompanyStr, qChangeCompany);
-            RowButton(changeResultStr, qChangeResult);
-        }
-
-        [Action]
-        private async Task EditRivalName(long telegramId)
-        {
-
-        }
-
-        [Action]
-        private async Task EditRivalCompany(long telegramId)
-        {
-
-        }
-
-        [Action]
-        private async Task EditRivalResult(long telegramId)
-        {
-
         }
 
         #endregion

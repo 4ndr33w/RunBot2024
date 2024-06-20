@@ -263,19 +263,12 @@ namespace RunBot2024.Controllers
                             #endregion
                         }
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
                         PushL("Некорректно введён результат.\nПопробуйте снова ввести команду /run и повторно добавить результат.\n" +
                            "Если проблема повторится, обратитесь к администратору бота");
 
-                        //string yesString = "Да, попробовать снова";
-                        //string noString = "Отмена";
-
-                        //var qAgain = Q(Run);
-                        //var qCancel = Q(CancelEnterResult);
-
-                        //RowButton(yesString, qAgain);
-                        //RowButton(noString, qCancel);
+                        await SaveErrorLogMethod(e, FromId, null, existingRival.Name);
                     }
                 }
             }
@@ -453,6 +446,32 @@ namespace RunBot2024.Controllers
                 _logger.LogInformation($"User {userName} status changed back to user");
                 await Send($"User {userName} status changed back to user");
             }
+        }
+
+        #endregion
+
+        #region Сохранение лога ошибок
+
+        [Action]
+        public async Task SaveErrorLogMethod(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        {
+            _logger.LogError(e, "Unhandled exception");
+            if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+            {
+                await AnswerCallback($"Error:\n{e}");
+            }
+            else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            {
+                Push($"Error");
+            }
+            var firstHalfOfMessage = $"Ошибка при отправке собщения участнику {selectedRivalName}";
+
+            ErrorLog errorLog = new ErrorLog();
+            errorLog.ErrorMessage = e.ToString() + firstHalfOfMessage + $"{adminName}";
+            errorLog.TelegramId = fromId;
+            errorLog.LastUpdated = DateTime.UtcNow;
+
+            await _logService.CreateErrorLogAsync(errorLog);
         }
 
         #endregion

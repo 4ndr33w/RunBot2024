@@ -15,7 +15,7 @@ namespace RunBot2024.Services
             _configuration = configuration;
         }
 
-        public async Task CreateRivalAsync(RivalModel rival)
+        public async Task<bool> CreateRivalAsync(RivalModel rival)
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
@@ -26,29 +26,39 @@ namespace RunBot2024.Services
                 query.Append($"VALUES ({rival.TelegramId}, \'{rival.Name}\', \'{rival.Company}\', \'{rival.Gender}\', {rival.Age}, {rival.TotalResult}, \'{rival.CreatedAt}\', \'{rival.UpdatedAt}\');");
 
                 await connection.OpenAsync();
-                await connection.ExecuteAsync(query.ToString());
+               var rows = await connection.ExecuteAsync(query.ToString());
                 await connection.CloseAsync();
                 query.Clear();
+
+                if (rows > 0)
+                { return true; }
+
+                return false;
             }
         }
 
-        public async Task DeleteRivalByIdAsync(long telegramId)
+        public async Task<bool> DeleteRivalByIdAsync(long telegramId)
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
                 StringBuilder query = new StringBuilder();
                 query.Append($"DELETE FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" ");
-                query.Append($"WHERE \"TelegramId\" = {telegramId} LIMIT 1;");
+                query.Append($"WHERE \"TelegramId\" = {telegramId};");
 
                 await connection.OpenAsync();
-                await connection.ExecuteAsync(query.ToString());
+                var rows = await connection.ExecuteAsync(query.ToString());
                 await connection.CloseAsync();
 
                 query.Clear();
+
+                if (rows > 0)
+                { return true; }
+
+                return false;
             }
         }
 
-        public async Task DeleteRivalByNameAsync(string name)
+        public async Task<bool> DeleteRivalByNameAsync(string name)
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
@@ -57,10 +67,14 @@ namespace RunBot2024.Services
                 query.Append($"WHERE \"Name\" = '{name}' LIMIT 1;");
 
                 await connection.OpenAsync();
-                await connection.ExecuteAsync(query.ToString());
+                var rows = await connection.ExecuteAsync(query.ToString());
                 await connection.CloseAsync();
 
                 query.Clear();
+                if (rows > 0)
+                { return true; }
+
+                return false;
             }
         }
 
@@ -82,7 +96,7 @@ namespace RunBot2024.Services
                 await connection.OpenAsync();
                 var response = await connection
                     .QueryAsync<RivalModel>
-                    ($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" WHERE \"Id\" = {telegramId}");
+                    ($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" WHERE \"TelegramId\" = {telegramId}");
                 await connection.CloseAsync();
                 return response.FirstOrDefault();
             }
@@ -101,7 +115,7 @@ namespace RunBot2024.Services
             }
         }
 
-        public async Task UpdateRivalAsync(RivalModel rival)
+        public async Task<bool> UpdateRivalAsync(RivalModel rival)
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
@@ -113,8 +127,13 @@ namespace RunBot2024.Services
                     .Append($"WHERE \"TelegramId\" = {rival.TelegramId}");
 
                 await connection.OpenAsync();
-                await connection.ExecuteAsync(query.ToString(), rival);
+                var rows = await connection.ExecuteAsync(query.ToString(), rival);
                 await connection.CloseAsync();
+
+                if (rows > 0)
+                { return true; }
+
+                return false;
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Deployf.Botf;
 using RunBot2024.Models;
+using RunBot2024.Services;
 using RunBot2024.Services.Interfaces;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -15,6 +16,7 @@ namespace RunBot2024.Controllers
         private readonly MessageSender _messageSender;
         private IRivalService _rivalService;
         private ICompanyService _companyService;
+        private ILogService _logService;
 
         private RivalModel _rival;
         private List<RivalModel> _rivalList;
@@ -25,13 +27,14 @@ namespace RunBot2024.Controllers
         private DateTime registrationStartDate;
         private static DateTime registrationEndDate;
         
-        public RegistrationController (IConfiguration configuration, ILogger<RegistrationController> logger, MessageSender messageSender, IRivalService rivalService, ICompanyService companyService)
+        public RegistrationController (IConfiguration configuration, ILogger<RegistrationController> logger, MessageSender messageSender, IRivalService rivalService, ICompanyService companyService, ILogService logService)
         {
             _configuration = configuration;
             _logger = logger;
             _messageSender = messageSender;
             _rivalService = rivalService;
             _companyService = companyService;
+            _logService = logService;
             //Initial();
         }
 
@@ -96,7 +99,7 @@ namespace RunBot2024.Controllers
             //-----------------------------------------------------------------------------------
             //  Пришлось обращаться к TelegramBotClient'у, а не делать через Botf, 
             //  отрисовывая кнопки через InlineKeyboardMarkup
-            //  так как при выборе кнопки "изменить имя" кнопки, отрисованные через Botf (Button(Q))
+            //  так как при выборе кнопки "изменить имя" - кнопки, отрисованные через Botf (Button(Q))
             //  съезжали вверх и отрисовывались над сообщениями с каждым нажатием на кнопку "изменить имя"
             //  Проблему удалось исправить через InlineKeyboardMarkup
             //-----------------------------------------------------------------------------------
@@ -328,6 +331,8 @@ namespace RunBot2024.Controllers
             else
             {
                 PushL("Ошибка при загрузке списка регионов.\nПопробуйте позже. Если ошибка повторится - обратитесь к администратору бота или к организаторам проекта.");
+
+                //await SaveErrorLogMethod(null, FromId, null, null);
             }
             #endregion
         }
@@ -336,9 +341,9 @@ namespace RunBot2024.Controllers
         public async Task SaveNewRival(RivalModel rival)
         {
             var newRival = rival;
-            _rivalList = await _rivalService.GetAllRivalsAsync();
+            //_rivalList = await _rivalService.GetAllRivalsAsync();
 
-            var existingUser = _rivalList.FirstOrDefault(r => r.TelegramId == rival.TelegramId);
+            var existingUser = await _rivalService.GetRivalByIdAsync(rival.TelegramId);//_rivalList.FirstOrDefault(r => r.TelegramId == rival.TelegramId);
             if (existingUser != null || existingUser != default)
             {
                 PushL($"Вы уже зарегистрированы как {existingUser.Name}, {existingUser.Company}!");
@@ -347,15 +352,60 @@ namespace RunBot2024.Controllers
             {
                 try
                 {
-                    await _rivalService.CreateRivalAsync(rival);
+                    var answer = await _rivalService.CreateRivalAsync(rival);
 
-                    await Send($"{rival.Name}, {rival.Company} - вы успешно зарегистрированы!");
+                    if (answer)
+                    {
+                        await Send($"{rival.Name}, {rival.Company} - вы успешно зарегистрированы!");
+                    }
+                    else
+                    {
+                        //await Send("Возникла ошибка при сохранении анкеты");
+                        throw new Exception("Возникла ошибка при сохранении анкеты");
+                    }
+                    
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     await Send("Возникла ошибка при сохранении анкеты");
+
+                    await SaveErrorLogMethod(e, FromId, null, existingUser.Name);
                 }
             }
         }
+
+        #region Сохранение лога ошибок
+
+        [Action]
+        public async Task SaveErrorLogMethod(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        {
+            _logger.LogError(e, "Unhandled exception");
+            if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
+            {
+                await AnswerCallback($"Error:\n{e}");
+            }
+            else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            {
+                Push($"Error");
+            }
+            var firstHalfOfMessage = "";
+            if (selectedRivalName == null)
+            {
+                firstHalfOfMessage = $"\nОшибка при отправке собщения всем участникам \nот ";
+            }
+            else
+            {
+                firstHalfOfMessage = $"\nОшибка при отправке собщения участнику {selectedRivalName} \nот ";
+            }
+
+            ErrorLog errorLog = new ErrorLog();
+            errorLog.ErrorMessage = e.ToString() + firstHalfOfMessage + $"{adminName}";
+            errorLog.TelegramId = fromId;
+            errorLog.LastUpdated = DateTime.UtcNow;
+
+            await _logService.CreateErrorLogAsync(errorLog);
+        }
+
+        #endregion
     }
 }

@@ -4,12 +4,12 @@ namespace RunBot2024.Services.Interfaces
 {
     public interface IRivalService
     {
-        Task CreateRivalAsync(RivalModel rival);
+        Task<bool> CreateRivalAsync(RivalModel rival);
         Task<RivalModel> GetRivalByIdAsync(long telegramId);
         Task<RivalModel> GetRivalByNamAsync(string name);
         Task<List<RivalModel>> GetAllRivalsAsync();
-        Task UpdateRivalAsync(RivalModel rival);
-        Task DeleteRivalByIdAsync(long telegramId);
-        Task DeleteRivalByNameAsync(string name);
+        Task<bool> UpdateRivalAsync(RivalModel rival);
+        Task<bool> DeleteRivalByIdAsync(long telegramId);
+        Task<bool> DeleteRivalByNameAsync(string name);
     }
 }
