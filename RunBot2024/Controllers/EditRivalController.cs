@@ -34,16 +34,17 @@ namespace RunBot2024.Controllers
 
         #region Редактирование данных участника
 
-        [Authorize("admin")]
-        [Action("/Редактир")]
+        //[Authorize("admin")]
+        [Action("/Редактир"), Authorize("admin")]
         public async Task Edit()
         {
-            await Send("Редактировать данные профиля участника. Продолжить?");
+            PushL("Редактировать данные профиля участника. Продолжить?");
 
             RowButton("Да, продолжить", Q(ChooseRivalToEdit));
             RowButton("Отмена", Q(Cancel));
         }
 
+        //[Authorize("admin")]
         [Action]
         private async Task ChooseRivalToEdit()
         {
