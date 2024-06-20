@@ -278,16 +278,33 @@ namespace RunBot2024.Controllers
             }
             else if (matchedRivals.Count > 1)
             {
-                PushL("Найдены следующие совпадения:");
+                // --------------------------------------------------------------------
+                // Снова при использовании Button(Q) кнопки сползали вверх по чату над текстом. Снова пришлось использовать
+                // InlineKeyboardMarkup как в контроллере регистрации
+                // ----------------------------------------------------------------------
+                InlineKeyboardButton[][] buttons = new InlineKeyboardButton[matchedRivals.Count][];
 
-                foreach (var rival in matchedRivals)
+                for (int i = 0; i < matchedRivals.Count; i++)
                 {
-                    string currentRival = $"{rival.Name} - {rival.Company} - {rival.TotalResult}";
-
-                    var qRival = Q(FinishDeleting, rival);
-
-                    RowButton(currentRival, qRival);
+                    var currentRivalNameButton = InlineKeyboardButton.WithCallbackData(matchedRivals[i].Name, matchedRivals[i].TelegramId.ToString());
+                    buttons[i] = new InlineKeyboardButton[1] { currentRivalNameButton };
                 }
+                InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
+
+                Message sentMessage = await Client
+                    .SendTextMessageAsync(FromId, "Найдены следующие совпадения:", ParseMode.Html, default, default, default, default, 0, true, markup);
+
+                var callback = await AwaitQuery();
+
+                var selectedRival = matchedRivals.First(x => x.TelegramId == Convert.ToInt64(callback));
+
+                await Client.EditMessageTextAsync(
+                    chatId: FromId,
+                    text: $"Удаление данных профиля участника {selectedRival.Name}:",
+                    messageId: sentMessage.MessageId,
+                    replyMarkup: null
+                    );
+                await FinishDeleting(selectedRival);
             }
         }
 
