@@ -5,6 +5,10 @@ using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.IO;
 using System.Text;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Types;
+using Telegram.Bot;
 
 namespace RunBot2024.Controllers
 {
@@ -116,18 +120,34 @@ namespace RunBot2024.Controllers
             }
             else if (selectedRivals.Count > 1)
             {
-                PushL("Найдены следующие совпадения:");
+                // --------------------------------------------------------------------
+                // Снова при использовании Button(Q) кнопки сползали вверх по чату над текстом. Снова пришлось использовать
+                // InlineKeyboardMarkup как в контроллере регистрации
+                // ----------------------------------------------------------------------
+                InlineKeyboardButton[][] buttons = new InlineKeyboardButton[selectedRivals.Count][];
 
-                foreach (var rival in selectedRivals)
+                for (int i = 0; i < selectedRivals.Count; i++)
                 {
-                    string currentRival = $"{rival.Name} - {rival.Company}";
-
-                    var qFunc = Q(SendMessageToSelectedRivalAsync, rival.TelegramId);
-
-                    RowButton(currentRival, qFunc);
+                    var currentRivalNameButton = InlineKeyboardButton.WithCallbackData(selectedRivals[i].Name, selectedRivals[i].TelegramId.ToString());
+                    buttons[i] = new InlineKeyboardButton[1] { currentRivalNameButton };
                 }
-            }
+                InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
 
+                Message sentMessage = await Client
+                    .SendTextMessageAsync(FromId, "Найдены следующие совпадения:", ParseMode.Html, default, default, default, default, 0, true, markup);
+
+                var callback = await AwaitQuery();
+
+                var selectedRival = selectedRivals.First(x => x.TelegramId == Convert.ToInt64(callback));
+
+                await Client.EditMessageTextAsync(
+                    chatId: FromId,
+                    text: $"Введите сообщение, которое хотите отправить участнику {selectedRival.Name}:",
+                    messageId: sentMessage.MessageId,
+                    replyMarkup: null
+                    );
+                await SendMessageToSelectedRivalAsync(selectedRival.TelegramId);
+            }
             else
             {
                 PushL("Не найдено ни одного совпадения по имени");
@@ -143,13 +163,11 @@ namespace RunBot2024.Controllers
             var mainAdmin = new Models.User();
             mainAdmin.FullName = _configuration["MainAdminName"];
             mainAdmin.Id = Convert.ToInt64(_configuration["AdminTelegramId"]);
-            //var rivalList = await _rivalService.GetAllRivalsAsync();
+
             var selectedRival = await _rivalService.GetRivalByIdAsync(telegramId);//rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
 
             try
             {
-                await Send($"Введите сообщение, которое хотите отправить участнику {selectedRival.Name}:");
-
                 var message = await AwaitText();
 
                 var msg = new MessageBuilder()
@@ -162,7 +180,6 @@ namespace RunBot2024.Controllers
                 {
                     if (admin.Id != FromId)
                     {
-                        
                         var adminAnswer = new MessageBuilder()
                          .SetChatId(admin.Id)
                          .Push($"(admin) {adminWhoTakeMessage.FullName} to {selectedRival.Name}: " + message);
