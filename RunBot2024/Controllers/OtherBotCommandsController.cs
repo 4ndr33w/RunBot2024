@@ -304,6 +304,7 @@ namespace RunBot2024.Controllers
                     messageId: sentMessage.MessageId,
                     replyMarkup: null
                     );
+
                 await FinishDeleting(selectedRival);
             }
         }

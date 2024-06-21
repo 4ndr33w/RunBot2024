@@ -3,6 +3,11 @@ using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.Threading.Channels;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Types;
+using Telegram.Bot;
+using System.Text.RegularExpressions;
 
 namespace RunBot2024.Controllers
 {
@@ -57,24 +62,43 @@ namespace RunBot2024.Controllers
 
                 string searchRivalName = await AwaitText();
 
-                var selectedRival = rivalList.Where(r => r.Name.ToLower().Contains(searchRivalName.ToLower())).ToList();
-                if (selectedRival.Count == 1)
+                var selectedRivals = rivalList.Where(r => r.Name.ToLower().Contains(searchRivalName.ToLower())).ToList();
+                if (selectedRivals.Count == 1)
                 {
-                    await Send($"Редактировать данные участника {selectedRival[0].Name} - {selectedRival[0].Company}");
-                    await EditRivalData(selectedRival[0].TelegramId);
+                    await Send($"Редактировать данные участника {selectedRivals[0].Name} - {selectedRivals[0].Company}");
+                    await EditRivalData(selectedRivals[0]);
                 }
-                else if (selectedRival.Count > 1)
+                else if (selectedRivals.Count > 1)
                 {
-                    PushL("Найдены следующие совпадения:");
+                    // --------------------------------------------------------------------
+                    // Снова при использовании Button(Q) кнопки сползали вверх по чату над текстом. Снова пришлось использовать
+                    // InlineKeyboardMarkup как в контроллере регистрации
+                    // ----------------------------------------------------------------------
 
-                    foreach (var r in selectedRival)
+                    InlineKeyboardButton[][] buttons = new InlineKeyboardButton[selectedRivals.Count][];
+
+                    for (int i = 0; i < selectedRivals.Count; i++)
                     {
-                        var currentRival = $"{r.Name} - {r.Company} - {r.TotalResult}";
-
-                        var qRival = Q(EditRivalData, r.TelegramId);
-
-                        RowButton(currentRival, qRival);
+                        var currentRivalNameButton = InlineKeyboardButton.WithCallbackData(selectedRivals[i].Name, selectedRivals[i].TelegramId.ToString());
+                        buttons[i] = new InlineKeyboardButton[1] { currentRivalNameButton };
                     }
+                    InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
+
+                    Message sentMessage = await Client
+                        .SendTextMessageAsync(FromId, "Найдены следующие совпадения:", ParseMode.Html, default, default, default, default, 0, true, markup);
+
+                    var callback = await AwaitQuery();
+
+                    var selectedRival = selectedRivals.First(x => x.TelegramId == Convert.ToInt64(callback));
+
+                    await Client.EditMessageTextAsync(
+                        chatId: FromId,
+                        text: $"Удаление данных профиля участника {selectedRival.Name}:",
+                        messageId: sentMessage.MessageId,
+                        replyMarkup: null
+                        );
+
+                    await EditRivalData(selectedRival);
                 }
                 else
                 {
@@ -88,67 +112,154 @@ namespace RunBot2024.Controllers
                 await SaveErrorLogMethod(e, FromId, null, null);
             }
         }
-        private async Task EditRivalData(long telegramId)
+        [Action]
+        private async Task EditRivalData(RivalModel rival)
         {
-            PushL("Какие данные участника отредактировать?");
+            // --------------------------------------------------------------------
+            // Снова при использовании Button(Q) кнопки сползали вверх по чату над текстом. Снова пришлось использовать
+            // InlineKeyboardMarkup как в контроллере регистрации
+            // ----------------------------------------------------------------------
 
-            string changeNameStr = "Изменить имя";
-            string changeCompanyStr = "Изменить команду";
-            string changeResultStr = "Изменить результат";
+            InlineKeyboardButton[][] buttons = new InlineKeyboardButton[4][];
 
-            var qChangeName = Q(EditRivalName, telegramId);
-            var qChangeCompany = Q(EditRivalCompany, telegramId);
-            var qChangeResult = Q(EditRivalResult, telegramId);
+            var changeNameButton = InlineKeyboardButton.WithCallbackData("Изменить имя", "changeName");
+            var changeCompanyButton = InlineKeyboardButton.WithCallbackData("Изменить предприятие", "changeCompany");
+            var changeResultButton = InlineKeyboardButton.WithCallbackData("Изменить результат", "changeResult");
+            var cancelButton = InlineKeyboardButton.WithCallbackData("Отмена", "cancel");
 
-            RowButton(changeNameStr, qChangeName);
-            RowButton(changeCompanyStr, qChangeCompany);
-            RowButton(changeResultStr, qChangeResult);
+            buttons[0] = new InlineKeyboardButton[1] { changeNameButton };
+            buttons[1] = new InlineKeyboardButton[1] { changeCompanyButton };
+            buttons[2] = new InlineKeyboardButton[1] { changeResultButton };
+            buttons[3] = new InlineKeyboardButton[1] { cancelButton };
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup(buttons);
+
+            Message sentMessage = await Client
+                .SendTextMessageAsync(FromId, "Какие данные участника отредактировать?", ParseMode.Html, default, default, default, default, 0, true, markup);
+
+            var callback = await AwaitQuery();
+
+            await Client.EditMessageTextAsync(
+                chatId: FromId,
+                text: $"Режим редактирования",
+                messageId: sentMessage.MessageId,
+                replyMarkup: null
+                );
+
+            if (callback.ToString() == "changeName")
+            {
+                await EditRivalName(rival);
+            }
+            if (callback.ToString() == "changeCompany")
+            {
+                await EditRivalCompany(rival);
+            }
+            if (callback.ToString() == "changeResult")
+            {
+                await EditRivalResult(rival);
+            }
+            if (callback.ToString() == "cancel")
+            {
+                await Cancel();
+            }
         }
 
-        //
-        // ToDo Block
-        //---------------------------------------------
+        #region Редактирование имени
+
         [Action]
-        private async Task EditRivalName(long telegramId) // ToDo
+        private async Task EditRivalName(RivalModel rival) 
         {
-            var selectedRival = await _rivalService.GetRivalByIdAsync(telegramId);
             try
             {
-                await Send($"Введите новое имя для участника {selectedRival.Name}:");
-                string oldName = selectedRival.Name;
+                await Send($"Введите новое имя для участника {rival.Name}:");
+                string oldName = rival.Name;
 
                 string newName = await AwaitText();
 
-                selectedRival.Name = newName;
+                rival.Name = newName;
 
-                var result = await _rivalService.UpdateRivalAsync(selectedRival);
+                var result = await _rivalService.UpdateRivalAsync(rival);
                 if (result)
                 {
-                    await Send($"Имя участника {oldName} было изменено на {selectedRival.Name}");
+                    await Send($"Имя участника {oldName} было изменено на {rival.Name}");
                 }
                 else
                 {
-                    throw new Exception($"ошибка при иозменении имени {selectedRival.Name}");
+                    throw new Exception($"ошибка при иозменении имени {rival.Name}");
                 }
             }
             catch (Exception e)
             {
 
-                await SaveErrorLogMethod(e, telegramId, Context.GetUserFullName(), selectedRival.Name);
+                await SaveErrorLogMethod(e, rival.TelegramId, Context.GetUserFullName(), rival.Name);
             }
         }
 
+        #endregion
+
         [Action]
-        private async Task EditRivalCompany(long telegramId) // ToDo
+        private async Task EditRivalCompany(RivalModel rival) // ToDo
         {
 
         }
 
+        #region Редактирование результата бега
         [Action]
-        private async Task EditRivalResult(long telegramId) // ToDo
+        private async Task EditRivalResult(RivalModel rival)
         {
+            try
+            {
+                await Send($"Введите новый результат для участника {rival.Name}:");
+                var oldResult = rival.TotalResult;
 
+                string newStringResult = await AwaitText();
+
+                #region парсинг введённого результата в дабл
+
+                double currentResult = 0;
+
+                //if (newStringResult.IndexOf(',') > 0)
+                //{
+                //    newStringResult.Replace(',', '.');
+                //}
+                if (newStringResult.IndexOf('.') > -1)
+                {
+                    newStringResult = newStringResult.Replace('.', ',');
+                }
+
+                if (newStringResult.IndexOf('+') > -1)
+                {
+                    newStringResult = newStringResult.Remove(newStringResult.IndexOf('+'), 1);
+                }
+                string regularPattern = @"[0-9]{0,5}\,?[0-9]{0,5}";
+                var _regex = new Regex(regularPattern);
+                var filteredString = _regex.Match(newStringResult).Value;
+                newStringResult = filteredString;
+                currentResult = Convert.ToDouble(newStringResult);
+
+                #endregion
+
+                rival.TotalResult = currentResult;
+
+                var result = await _rivalService.UpdateRivalAsync(rival);
+                if (result)
+                {
+                    await Send($"Результат участника {rival.Name} был изменён с {oldResult} на {rival.TotalResult}");
+                }
+                else
+                {
+                    throw new Exception($"ошибка при иозменении результата бега {rival.Name}");
+                }
+            }
+            catch (Exception e)
+            {
+
+                await SaveErrorLogMethod(e, rival.TelegramId, Context.GetUserFullName(), rival.Name);
+            }
         }
+
+        #endregion
+
         //---------------------------------------------
         // ToDo Block
         //

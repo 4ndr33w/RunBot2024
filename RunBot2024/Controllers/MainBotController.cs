@@ -86,10 +86,10 @@ namespace RunBot2024.Controllers
 
             MakeKButtonRow();
             KButton("/Редактир");
-            KButton("/Удалить");
+            KButton("/Удалить"); // Done
 
-            MakeKButtonRow();
-            KButton("/ПоискПоИмени");
+            //MakeKButtonRow();
+            //KButton("/ПоискПоИмени");
 
             MakeKButtonRow();
             KButton("/СкрытьКнопки"); // Done
