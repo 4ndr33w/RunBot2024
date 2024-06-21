@@ -1,12 +1,10 @@
 ﻿using Deployf.Botf;
-using Microsoft.AspNetCore.Mvc;
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.Text;
 using System.Text.RegularExpressions;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.InputFiles;
 
 namespace RunBot2024.Controllers
@@ -21,7 +19,16 @@ namespace RunBot2024.Controllers
         readonly ILogService _logService;
         readonly IRivalService _rivalService;
 
-        public MainBotController(TableQuery<Models.User> users, SQLiteConnection sqLiteConnection, ILogger<MainBotController> logger, BotfOptions options, IConfiguration configuration, ILogService logService, IRivalService rivalService)
+        public MainBotController
+            (
+            TableQuery<Models.User> users, 
+            SQLiteConnection sqLiteConnection, 
+            ILogger<MainBotController> logger, 
+            BotfOptions options, 
+            IConfiguration configuration, 
+            ILogService logService, 
+            IRivalService rivalService
+            )
         {
             _users = users;
             _sqLiteConnection = sqLiteConnection;
@@ -33,6 +40,7 @@ namespace RunBot2024.Controllers
         }
 
         #region start
+
         [Action("/start", "Начало работы бота")]
         public async Task Start()
         {
@@ -85,7 +93,7 @@ namespace RunBot2024.Controllers
             KButton("/СообщВсем"); // Done
 
             MakeKButtonRow();
-            KButton("/Редактир");
+            KButton("/Редактир"); // Done
             KButton("/Удалить"); // Done
 
             //MakeKButtonRow();
@@ -137,6 +145,7 @@ namespace RunBot2024.Controllers
         #endregion
 
         #region addResult
+
         [Action("/run", "Добавить результат тренировки")]
         public async Task Run()
         {

@@ -2,13 +2,11 @@
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 using SQLite;
-using System.Threading.Channels;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace RunBot2024.Controllers
 {
@@ -208,7 +206,7 @@ namespace RunBot2024.Controllers
         #endregion
 
         [Action]
-        private async Task EditRivalCompany(RivalModel rival) // ToDo
+        private async Task EditRivalCompany(RivalModel rival) 
         {
             try
             {
@@ -388,10 +386,6 @@ namespace RunBot2024.Controllers
         }
 
         #endregion
-
-        //---------------------------------------------
-        // ToDo Block
-        //
 
         #endregion
 

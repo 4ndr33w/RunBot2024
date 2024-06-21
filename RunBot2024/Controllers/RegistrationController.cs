@@ -27,7 +27,15 @@ namespace RunBot2024.Controllers
         private DateTime registrationStartDate;
         private static DateTime registrationEndDate;
         
-        public RegistrationController (IConfiguration configuration, ILogger<RegistrationController> logger, MessageSender messageSender, IRivalService rivalService, ICompanyService companyService, ILogService logService)
+        public RegistrationController 
+            (
+            IConfiguration configuration, 
+            ILogger<RegistrationController> logger, 
+            MessageSender messageSender, 
+            IRivalService rivalService, 
+            ICompanyService companyService, 
+            ILogService logService
+            )
         {
             _configuration = configuration;
             _logger = logger;
@@ -40,6 +48,7 @@ namespace RunBot2024.Controllers
 
         [State]
         string _name;
+
         private async Task Initial()
         {
             _rivalList = await _rivalService.GetAllRivalsAsync();

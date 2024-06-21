@@ -3,7 +3,6 @@ using RunBot2024.Models;
 using RunBot2024.Models.Enums;
 using RunBot2024.Services.Interfaces;
 using SQLite;
-using System.IO;
 using System.Text;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -25,7 +24,17 @@ namespace RunBot2024.Controllers
 
         private List<RivalModel> _rivalList;
 
-        public OtherBotCommandsController(TableQuery<Models.User> users, SQLiteConnection sqLiteConnection, ILogger<OtherBotCommandsController> logger, BotfOptions options, IConfiguration configuration, IRivalService rivalService, MessageSender messageSender, ILogService logService)
+        public OtherBotCommandsController
+            (
+            TableQuery<Models.User> users, 
+            SQLiteConnection sqLiteConnection, 
+            ILogger<OtherBotCommandsController> logger, 
+            BotfOptions options, 
+            IConfiguration configuration, 
+            IRivalService rivalService, 
+            MessageSender messageSender, 
+            ILogService logService
+            )
         {
             _users = users;
             _sqLiteConnection = sqLiteConnection;
