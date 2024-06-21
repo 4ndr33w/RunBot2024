@@ -8,6 +8,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace RunBot2024.Controllers
 {
@@ -19,12 +20,22 @@ namespace RunBot2024.Controllers
         readonly BotfOptions _options;
         readonly IConfiguration _configuration;
         readonly IRivalService _rivalService;
+        readonly ICompanyService _companyService;
         private readonly MessageSender _messageSender;
         private readonly ILogService _logService;
 
-        //private List<RivalModel> _rivalList;
-
-        public EditRivalController(TableQuery<Models.User> users, SQLiteConnection sqLiteConnection, ILogger<EditRivalController> logger, BotfOptions options, IConfiguration configuration, IRivalService rivalService, MessageSender messageSender, ILogService logService)
+        public EditRivalController
+            (
+            TableQuery<Models.User> users, 
+            SQLiteConnection sqLiteConnection, 
+            ILogger<EditRivalController> logger, 
+            BotfOptions options, 
+            IConfiguration configuration, 
+            IRivalService rivalService, 
+            MessageSender messageSender, 
+            ILogService logService, 
+            ICompanyService companyService
+            )
         {
             _users = users;
             _sqLiteConnection = sqLiteConnection;
@@ -34,12 +45,11 @@ namespace RunBot2024.Controllers
             _rivalService = rivalService;
             _messageSender = messageSender;
             _logService = logService;
+            _companyService = companyService;
         }
-
 
         #region Редактирование данных участника
 
-        //[Authorize("admin")]
         [Action("/Редактир"), Authorize("admin")]
         public async Task Edit()
         {
@@ -49,7 +59,6 @@ namespace RunBot2024.Controllers
             RowButton("Отмена", Q(Cancel));
         }
 
-        //[Authorize("admin")]
         [Action]
         private async Task ChooseRivalToEdit()
         {
@@ -102,7 +111,7 @@ namespace RunBot2024.Controllers
                 }
                 else
                 {
-                    PushL("Не найдено ни одного совпадения");
+                    await Send("Не найдено ни одного совпадения");
                 }
             }
             catch (Exception e)
@@ -112,6 +121,7 @@ namespace RunBot2024.Controllers
                 await SaveErrorLogMethod(e, FromId, null, null);
             }
         }
+
         [Action]
         private async Task EditRivalData(RivalModel rival)
         {
@@ -200,7 +210,126 @@ namespace RunBot2024.Controllers
         [Action]
         private async Task EditRivalCompany(RivalModel rival) // ToDo
         {
+            try
+            {
+                string oldCompanyName = new string(rival.Company);
 
+                #region Выбор региона
+
+                var regionList = await _companyService.GetRegionListAsync();
+                InlineKeyboardButton[][] regionButtons = new InlineKeyboardButton[regionList.Count][];
+
+                int i = 0;
+
+                foreach (var eachRegion in regionList)
+                {
+                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(eachRegion.RegionName, $"{eachRegion.RegionId}");
+
+                    regionButtons[i] = new InlineKeyboardButton[1] { _currentRegionButton };
+                    i++;
+                }
+                InlineKeyboardMarkup regionMarkup = new InlineKeyboardMarkup(regionButtons);
+
+                Message regionMessage = await Client
+                    .SendTextMessageAsync(FromId, $"Выберите регион, в котором находится требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, regionMarkup);
+
+                var regionCallback = await AwaitQuery();
+
+                Region selectedRegion = regionList.First(r => r.RegionId == Convert.ToInt32(regionCallback));
+
+                string region = selectedRegion.RegionName;
+
+                await Client.EditMessageTextAsync(
+                chatId: FromId,
+                    text: $"{region}",
+                    messageId: regionMessage.MessageId,
+                    replyMarkup: null
+                    );
+
+                #endregion
+
+                #region выбор города
+
+                var cityList = await _companyService.GetCityListAsync();
+
+                List<City> selectedRegionCityList = new List<City>(cityList.Where(c => c.RegionId == selectedRegion.RegionId).ToList());
+
+                InlineKeyboardButton[][] cityButtons = new InlineKeyboardButton[selectedRegionCityList.Count][];
+
+                int y = 0;
+
+                foreach (var city in selectedRegionCityList)
+                {
+                    var _currentCityButton = InlineKeyboardButton.WithCallbackData(city.CityName, $"{city.CityId}");
+                    cityButtons[y] = new InlineKeyboardButton[1] { _currentCityButton };
+                    y++;
+                }
+                InlineKeyboardMarkup cityMarkup = new InlineKeyboardMarkup(cityButtons);
+
+                Message cityMessage = await Client
+                    .SendTextMessageAsync(FromId, $"Выберите город, в котором находится требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, cityMarkup);
+
+                var cityCallback = await AwaitQuery();
+
+                City selectedCity = cityList.First(c => c.CityId == Convert.ToInt32(cityCallback));
+
+                await Client.EditMessageTextAsync(
+                chatId: FromId,
+                    text: $"{selectedCity.CityName}",
+                    messageId: cityMessage.MessageId,
+                    replyMarkup: null
+                    );
+
+                #endregion
+
+                #region выбор предприятия
+
+                var companyList = await _companyService.GetCompanyListAsync();
+
+                List<Company> selectedCityCompanies = new List<Company>(companyList.Where(c => c.CityId == selectedCity.CityId).ToList());
+                InlineKeyboardButton[][] companyButtons = new InlineKeyboardButton[selectedCityCompanies.Count][];
+
+                int j = 0;
+
+                foreach (var company in selectedCityCompanies)
+                {
+                    var _currentCompanyButton = InlineKeyboardButton.WithCallbackData(company.CompanyName, $"{company.CompanyId}");
+                    companyButtons[j] = new InlineKeyboardButton[1] { _currentCompanyButton };
+                    j++;
+                }
+                InlineKeyboardMarkup companyMarkup = new InlineKeyboardMarkup(companyButtons);
+
+                Message companyMessage = await Client
+                    .SendTextMessageAsync(FromId, $"Выберите требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, companyMarkup);
+
+                var companyCallback = await AwaitQuery();
+
+                Company selectedCompany = companyList.First(c => c.CompanyId == Convert.ToInt32(companyCallback));
+                rival.Company = selectedCompany.CompanyName;
+
+                await Client.EditMessageTextAsync(
+                    chatId: FromId,
+                    text: $"Смена предприятия с {oldCompanyName} на {selectedCompany.CompanyName}\nдля участника: {rival.Name}",
+                    messageId: companyMessage.MessageId,
+                    replyMarkup: null
+                    );
+
+                #endregion
+
+                var result = await _rivalService.UpdateRivalAsync(rival);
+                if (result)
+                {
+                    await Send($"Предприятие участника {rival.Name} изменено на {rival.Company}");
+                }
+                else
+                {
+                    throw new Exception($"ошибка при иозменении имени {rival.Name}");
+                }
+            }
+            catch (Exception e)
+            {
+                await SaveErrorLogMethod(e, rival.TelegramId, Context.GetUserFullName(), rival.Name);
+            }
         }
 
         #region Редактирование результата бега
