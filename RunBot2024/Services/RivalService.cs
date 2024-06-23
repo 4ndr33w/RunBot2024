@@ -3,7 +3,6 @@ using RunBot2024.Services.Interfaces;
 using Npgsql;
 using System.Text;
 using Dapper;
-using System.Text.RegularExpressions;
 
 namespace RunBot2024.Services
 {

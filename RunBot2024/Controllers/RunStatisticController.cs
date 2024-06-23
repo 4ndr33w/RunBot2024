@@ -1,8 +1,6 @@
 ﻿using Deployf.Botf;
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
-using SQLite;
-using System.Collections.Generic;
 using System.Text;
 
 namespace RunBot2024.Controllers
@@ -77,7 +75,6 @@ namespace RunBot2024.Controllers
             PushL("Сводка по участникам.");
 
             var rivalList = await _rivalService.GetAllRivalsAsync();
-            //var filteredRivalList = new List<RivalModel>();
 
             if (gender != "all")
             {

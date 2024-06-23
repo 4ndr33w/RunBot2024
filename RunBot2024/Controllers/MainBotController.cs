@@ -83,7 +83,7 @@ namespace RunBot2024.Controllers
         {
             //------------------------------------------
             KButton("/run"); // Done
-            KButton("/stat");
+            KButton("/stat"); // Done
             KButton("/register");  // Done
             KButton("/help"); // Done
             //------------------------------------------
@@ -113,7 +113,7 @@ namespace RunBot2024.Controllers
         {
             //------------------------------------------
             KButton("/run"); // Done
-            KButton("/stat");
+            KButton("/stat"); // Done
             KButton("/register");  // Done
             KButton("/help"); // Done
             //------------------------------------------
@@ -358,7 +358,7 @@ namespace RunBot2024.Controllers
             {
                 userListToString.Append($"{item.Id} - {item.FullName} - {item.Role}" + "\n");
             }
-            await Send(/*"Authorized"*/userListToString.ToString());
+            await Send(userListToString.ToString());
         }
 
         [Authorize("admin")]

@@ -5,8 +5,6 @@ using RunBot2024.Models;
 using RunBot2024.Services;
 using RunBot2024.Services.Interfaces;
 using SQLite;
-//using Microsoft.Data.Sqlite;
-//using SQLitePCL;
 
 namespace RunBot2024
 {

@@ -16,17 +16,16 @@ namespace RunBot2024.Controllers
             _logger = logger;
         }
 
-        [Action("/getAll")]
-        public async Task GetAll()
-        {
-            //await Send("Hello Message");
-            var userList = await _rivalService.GetAllRivalsAsync();
+        //[Action("/getAll")]
+        //public async Task GetAll()
+        //{
+        //    var userList = await _rivalService.GetAllRivalsAsync();
 
-            foreach (var user in userList)
-            {
-                PushL($"{user.Name} - {user.Company}");
-            }
-        }
+        //    foreach (var user in userList)
+        //    {
+        //        PushL($"{user.Name} - {user.Company}");
+        //    }
+        //}
 
         [Action]
         public async Task Test()
