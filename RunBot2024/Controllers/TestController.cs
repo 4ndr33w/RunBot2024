@@ -7,11 +7,13 @@ namespace RunBot2024.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IRivalService _rivalService;
+        private readonly ILogger<TestController> _logger;
 
-        public TestController(IConfiguration configuration, IRivalService rivalService)
+        public TestController(IConfiguration configuration, IRivalService rivalService, ILogger<TestController> logger)
         {
             _configuration = configuration;
             _rivalService = rivalService;
+            _logger = logger;
         }
 
         [Action("/getAll")]
@@ -24,6 +26,11 @@ namespace RunBot2024.Controllers
             {
                 PushL($"{user.Name} - {user.Company}");
             }
+        }
+
+        [Action]
+        public async Task Test()
+        {
         }
     }
 }

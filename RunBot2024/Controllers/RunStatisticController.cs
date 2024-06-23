@@ -1,34 +1,37 @@
 ﻿using Deployf.Botf;
+using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 using SQLite;
+using System.Collections.Generic;
+using System.Text;
 
 namespace RunBot2024.Controllers
 {
     public class RunStatisticController : BotController
     {
-        readonly TableQuery<Models.User> _users;
         readonly ILogger<RunStatisticController> _logger;
         readonly BotfOptions _options;
         readonly IConfiguration _configuration;
         readonly ILogService _logService;
         readonly IRivalService _rivalService;
+        private readonly ICompanyService _companyService;
 
         public RunStatisticController
             (
-            TableQuery<Models.User> users,
-            ILogger<RunStatisticController> logger,
-            BotfOptions options,
-            IConfiguration configuration,
-            ILogService logService,
-            IRivalService rivalService
+                ILogger<RunStatisticController> logger,
+                BotfOptions options,
+                IConfiguration configuration,
+                ILogService logService,
+                IRivalService rivalService,
+                ICompanyService companyService
             )
         {
-            _users = users;
             _logger = logger;
             _options = options;
             _configuration = configuration;
             _logService = logService;
             _rivalService = rivalService;
+            _companyService = companyService;
         }
 
         [Action("/stat", "Вывести статистику по соревнованию")]
@@ -74,6 +77,7 @@ namespace RunBot2024.Controllers
             PushL("Сводка по участникам.");
 
             var rivalList = await _rivalService.GetAllRivalsAsync();
+            //var filteredRivalList = new List<RivalModel>();
 
             if (gender != "all")
             {
@@ -82,7 +86,70 @@ namespace RunBot2024.Controllers
                     .OrderByDescending(x => x.TotalResult)
                     .ToList();
             }
+
+            //---------------------------------------------------------------------
+            //Передаём FilteredRivalList для отображения статистики по участникам
+            //         FullRivalList - для подсчета статистики по предприятиям
+            //---------------------------------------------------------------------
+
+            await RivalStatisticsListViewMethod(rivalList, gender);
         }
 
+        [Action]
+        private async Task RivalStatisticsListViewMethod(List<RivalModel> rivalList, string gender)
+        {
+            StringBuilder statList = new StringBuilder();
+
+            if (rivalList.Count < 1)
+            {
+                await Send("Участников нет");
+            }
+            else
+            {
+                if (gender == "male")
+                {
+                    await Send("Мужчины: ");
+                }
+                if (gender == "female")
+                {
+                    await Send("Женщины: ");
+                }
+                if (gender == "all")
+                {
+                    await Send("Все участники: ");
+                }
+
+                foreach (var rival in rivalList)
+                {
+                    int index = rivalList.IndexOf(rival) + 1;
+                    statList.AppendLine($"{index} - {rival.Name} - {rival.TotalResult} км\n     •   {rival.Company}");
+                }
+
+                await Send($"{statList.ToString()}\n----------------------------------------\n\n\"Сводка по предприятиям:\n");
+
+                statList.Clear();
+
+                await CompanyStatisticsListViewMethod();
+            }
+        }
+
+        [Action]
+        private async Task CompanyStatisticsListViewMethod()
+        {
+            var companyStatList = await _rivalService.GetCompanyStatisitcs();
+
+            int index = 0;
+
+            StringBuilder statList = new StringBuilder();
+            foreach (var item in companyStatList)
+            {
+                index++;
+                statList.AppendLine($"{index} - {item.CompanyName} - {item.Result} км");
+                statList.AppendLine($"     •   {item.RivalsCount} участников");
+            }
+            await Send(statList.ToString());
+
+            statList.Clear();
+        }
     }
 }

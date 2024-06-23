@@ -29,12 +29,12 @@ namespace RunBot2024.Controllers
         
         public RegistrationController 
             (
-            IConfiguration configuration, 
-            ILogger<RegistrationController> logger, 
-            MessageSender messageSender, 
-            IRivalService rivalService, 
-            ICompanyService companyService, 
-            ILogService logService
+                IConfiguration configuration, 
+                ILogger<RegistrationController> logger, 
+                MessageSender messageSender, 
+                IRivalService rivalService, 
+                ICompanyService companyService, 
+                ILogService logService
             )
         {
             _configuration = configuration;

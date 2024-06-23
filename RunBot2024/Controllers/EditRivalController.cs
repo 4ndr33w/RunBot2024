@@ -24,15 +24,15 @@ namespace RunBot2024.Controllers
 
         public EditRivalController
             (
-            TableQuery<Models.User> users, 
-            SQLiteConnection sqLiteConnection, 
-            ILogger<EditRivalController> logger, 
-            BotfOptions options, 
-            IConfiguration configuration, 
-            IRivalService rivalService, 
-            MessageSender messageSender, 
-            ILogService logService, 
-            ICompanyService companyService
+                TableQuery<Models.User> users, 
+                SQLiteConnection sqLiteConnection, 
+                ILogger<EditRivalController> logger, 
+                BotfOptions options, 
+                IConfiguration configuration, 
+                IRivalService rivalService, 
+                MessageSender messageSender, 
+                ILogService logService, 
+                ICompanyService companyService
             )
         {
             _users = users;

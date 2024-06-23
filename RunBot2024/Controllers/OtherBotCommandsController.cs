@@ -14,7 +14,6 @@ namespace RunBot2024.Controllers
     public class OtherBotCommandsController : BotController
     {
         readonly TableQuery<Models.User> _users;
-        readonly SQLiteConnection _sqLiteConnection;
         readonly ILogger<OtherBotCommandsController> _logger;
         readonly BotfOptions _options;
         readonly IConfiguration _configuration;
@@ -26,18 +25,16 @@ namespace RunBot2024.Controllers
 
         public OtherBotCommandsController
             (
-            TableQuery<Models.User> users, 
-            SQLiteConnection sqLiteConnection, 
-            ILogger<OtherBotCommandsController> logger, 
-            BotfOptions options, 
-            IConfiguration configuration, 
-            IRivalService rivalService, 
-            MessageSender messageSender, 
-            ILogService logService
+                TableQuery<Models.User> users,
+                ILogger<OtherBotCommandsController> logger, 
+                BotfOptions options, 
+                IConfiguration configuration, 
+                IRivalService rivalService, 
+                MessageSender messageSender, 
+                ILogService logService
             )
         {
             _users = users;
-            _sqLiteConnection = sqLiteConnection;
             _logger = logger;
             _options = options;
             _configuration = configuration;
@@ -173,7 +170,7 @@ namespace RunBot2024.Controllers
             mainAdmin.FullName = _configuration["MainAdminName"];
             mainAdmin.Id = Convert.ToInt64(_configuration["AdminTelegramId"]);
 
-            var selectedRival = await _rivalService.GetRivalByIdAsync(telegramId);//rivalList.FirstOrDefault(c => c.TelegramId == telegramId);
+            var selectedRival = await _rivalService.GetRivalByIdAsync(telegramId);
 
             try
             {

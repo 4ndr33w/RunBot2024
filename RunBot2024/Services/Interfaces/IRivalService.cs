@@ -11,5 +11,7 @@ namespace RunBot2024.Services.Interfaces
         Task<bool> UpdateRivalAsync(RivalModel rival);
         Task<bool> DeleteRivalByIdAsync(long telegramId);
         Task<bool> DeleteRivalByNameAsync(string name);
+
+        Task<IEnumerable<CompanyStatisticModel>> GetCompanyStatisitcs();
     }
 }

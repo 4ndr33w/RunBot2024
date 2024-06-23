@@ -3,6 +3,7 @@ using RunBot2024.Services.Interfaces;
 using Npgsql;
 using System.Text;
 using Dapper;
+using System.Text.RegularExpressions;
 
 namespace RunBot2024.Services
 {
@@ -89,6 +90,30 @@ namespace RunBot2024.Services
             }
         }
 
+        public async Task<IEnumerable<CompanyStatisticModel>> GetCompanyStatisitcs()
+        {
+            using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
+            {
+                var queryString = new StringBuilder();
+                queryString.Append($"SELECT \"Company\" as \"CompanyName\", \n");
+                queryString.Append($"SUM (\"TotalResult\") as \"Result\", \n");
+                queryString.Append($"COUNT (\"Company\") as \"RivalsCount\" \n");
+
+                queryString.Append($"FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" \n");
+                queryString.Append($"WHERE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"TotalResult\" > 0 \n");
+
+                queryString.Append($"GROUP BY \"CompanyName\" \n");
+                queryString.Append($"ORDER BY \"Result\" DESC;");
+
+                await connection.OpenAsync();
+                var response = await connection
+                    .QueryAsync<CompanyStatisticModel>
+                    (queryString.ToString());
+                await connection.CloseAsync();
+                return response;
+            }
+        }
+
         public async Task<RivalModel> GetRivalByIdAsync(long telegramId)
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
@@ -98,6 +123,7 @@ namespace RunBot2024.Services
                     .QueryAsync<RivalModel>
                     ($"SELECT * FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" WHERE \"TelegramId\" = {telegramId}");
                 await connection.CloseAsync();
+
                 return response.FirstOrDefault();
             }
         }

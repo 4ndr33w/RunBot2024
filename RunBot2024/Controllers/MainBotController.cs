@@ -21,13 +21,13 @@ namespace RunBot2024.Controllers
 
         public MainBotController
             (
-            TableQuery<Models.User> users, 
-            SQLiteConnection sqLiteConnection, 
-            ILogger<MainBotController> logger, 
-            BotfOptions options, 
-            IConfiguration configuration, 
-            ILogService logService, 
-            IRivalService rivalService
+                TableQuery<Models.User> users, 
+                SQLiteConnection sqLiteConnection, 
+                ILogger<MainBotController> logger, 
+                BotfOptions options, 
+                IConfiguration configuration, 
+                ILogService logService, 
+                IRivalService rivalService
             )
         {
             _users = users;
