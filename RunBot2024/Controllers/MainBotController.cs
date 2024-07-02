@@ -59,17 +59,16 @@ namespace RunBot2024.Controllers
                 MakeKButtonRow();
                 KButton("/Управление"); // Done
             }
-
-            //await SendFileMessage(_configuration["StartMessageTextFilePath"]);
-
-            //await SendFileMessage(_configuration["LogoFilePath"]);
-
             _messageService = new MessageService(_configuration);
-            //_messageService = new MessageController(_configuration);
             await _messageService.SendFileMessage(_configuration["StartMessageTextFilePath"], FromId);
 
-            //this.Photo(_configuration["LogoFilePath"]);
-
+            //-------------------------------------------------------------------------
+            //  Возникла необходимость отправки сообщения через BotController
+            //  иначе при отправке изображения не из этого метода
+            //  выскакивает UnhandeledException 'text message is empty'
+            //  хотя изображение отправляется корректно
+            PushL("<b>Хороших вам результатов!</b>");
+            //-------------------------------------------------------------------------
             await _messageService.SendFileMessage(_configuration["LogoFilePath"], FromId);
         }
         #endregion
@@ -134,9 +133,7 @@ namespace RunBot2024.Controllers
         public async Task Help()
         {
             _messageService = new MessageService(_configuration);
-            //_messageService = new MessageController(_configuration);
             await _messageService.SendFileMessage(_configuration["HelpMessageTextFilePath"], FromId);
-            //await SendFileMessage(_configuration["HelpMessageTextFilePath"]);
         }
         #endregion
 
@@ -481,38 +478,5 @@ namespace RunBot2024.Controllers
 
         #endregion
 
-
-        #region Отправить сообщением данные из файла
-
-        [Action]
-        private async Task SendFileMessage(string filePath)
-        {
-            string fileExtension = filePath.Substring(filePath.Length - 3, 3).ToLower();
-            bool isTextFile = fileExtension == "txt"? true : false;
-
-            if (isTextFile)
-            {
-                using (var streamReader = new StreamReader(filePath))
-                {
-                    StringBuilder messageText = new StringBuilder();
-                    messageText.Append(await streamReader.ReadToEndAsync());
-                    streamReader.Close();
-
-                    await Send(messageText.ToString());
-                    messageText.Clear();
-                }
-            }
-
-            else
-            {
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    await Client.SendPhotoAsync(chatId: FromId, photo: new InputOnlineFile(fileStream));
-                    fileStream.Close();
-                }
-            }
-            
-        }
-        #endregion
     }
 }

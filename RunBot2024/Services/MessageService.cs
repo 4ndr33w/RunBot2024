@@ -1,5 +1,4 @@
-﻿//using Deployf.Botf;
-using System.Text;
+﻿using System.Text;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot;
 using Telegram.Bot.Types.InputFiles;
@@ -10,8 +9,8 @@ namespace RunBot2024.Services
     {
         private readonly IConfiguration _configuration;
 
-        private TelegramBotClientOptions _botClientOptions;// = new TelegramBotClientOptions();
-        private TelegramBotClient _botClient;// = new TelegramBotClient();
+        private TelegramBotClientOptions _botClientOptions;
+        private TelegramBotClient _botClient;
 
         public MessageService(IConfiguration configuration)
         {
@@ -21,7 +20,7 @@ namespace RunBot2024.Services
             _botClient = new TelegramBotClient(_botClientOptions);
         }
 
-         public async Task SendFileMessage(string filePath, long chatId)
+        public async Task SendFileMessage(string filePath, long chatId)
         {
             string fileExtension = filePath.Substring(filePath.Length - 3, 3).ToLower();
             bool isTextFile = fileExtension == "txt" ? true : false;
@@ -34,7 +33,7 @@ namespace RunBot2024.Services
                     messageText.Append(await streamReader.ReadToEndAsync());
                     streamReader.Close();
 
-                    await _botClient.SendTextMessageAsync(chatId, messageText.ToString(), ParseMode.Html, default, default, default, default, 0, true, null);
+                    await _botClient.SendTextMessageAsync(chatId, messageText.ToString(), ParseMode.Html);
                     messageText.Clear();
                 }
             }
