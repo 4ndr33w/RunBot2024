@@ -1,5 +1,7 @@
 ﻿using Deployf.Botf;
+using Microsoft.Extensions.Options;
 using RunBot2024.Models;
+using RunBot2024.Services;
 using RunBot2024.Services.Interfaces;
 using SQLite;
 using System.Text;
@@ -18,6 +20,9 @@ namespace RunBot2024.Controllers
         readonly IConfiguration _configuration;
         readonly ILogService _logService;
         readonly IRivalService _rivalService;
+
+        private MessageService _messageService;
+        //private MessageController _messageService;
 
         public MainBotController
             (
@@ -55,21 +60,17 @@ namespace RunBot2024.Controllers
                 KButton("/Управление"); // Done
             }
 
-            using (var streamReader = new StreamReader(_configuration["StartMessageTextFile"]))
-            {
-                StringBuilder helloMessageText = new StringBuilder();
-                helloMessageText.Append(await streamReader.ReadToEndAsync());
-                streamReader.Close();
+            //await SendFileMessage(_configuration["StartMessageTextFilePath"]);
 
-                await Send(helloMessageText.ToString());
-                helloMessageText.Clear();
-            }
-            using (var fileStream = new FileStream(_configuration["LogoStaticFilePathl"], FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                await Client.SendPhotoAsync(chatId: FromId, photo: new InputOnlineFile(fileStream));
-                fileStream.Close();
-            }
-            //await Send("HelloMessage");
+            //await SendFileMessage(_configuration["LogoFilePath"]);
+
+            _messageService = new MessageService(_configuration);
+            //_messageService = new MessageController(_configuration);
+            await _messageService.SendFileMessage(_configuration["StartMessageTextFilePath"], FromId);
+
+            //this.Photo(_configuration["LogoFilePath"]);
+
+            await _messageService.SendFileMessage(_configuration["LogoFilePath"], FromId);
         }
         #endregion
 
@@ -132,15 +133,10 @@ namespace RunBot2024.Controllers
         [Action("/help", "Помощь")]
         public async Task Help()
         {
-            using (var streamReader = new StreamReader(_configuration["HelpMessageTextFile"]))
-            {
-                StringBuilder helpMessageText = new StringBuilder();
-                helpMessageText.Append(await streamReader.ReadToEndAsync());
-                streamReader.Close();
-
-                await Send(helpMessageText.ToString());
-                helpMessageText.Clear();
-            }
+            _messageService = new MessageService(_configuration);
+            //_messageService = new MessageController(_configuration);
+            await _messageService.SendFileMessage(_configuration["HelpMessageTextFilePath"], FromId);
+            //await SendFileMessage(_configuration["HelpMessageTextFilePath"]);
         }
         #endregion
 
@@ -483,6 +479,40 @@ namespace RunBot2024.Controllers
             await _logService.CreateErrorLogAsync(errorLog);
         }
 
+        #endregion
+
+
+        #region Отправить сообщением данные из файла
+
+        [Action]
+        private async Task SendFileMessage(string filePath)
+        {
+            string fileExtension = filePath.Substring(filePath.Length - 3, 3).ToLower();
+            bool isTextFile = fileExtension == "txt"? true : false;
+
+            if (isTextFile)
+            {
+                using (var streamReader = new StreamReader(filePath))
+                {
+                    StringBuilder messageText = new StringBuilder();
+                    messageText.Append(await streamReader.ReadToEndAsync());
+                    streamReader.Close();
+
+                    await Send(messageText.ToString());
+                    messageText.Clear();
+                }
+            }
+
+            else
+            {
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    await Client.SendPhotoAsync(chatId: FromId, photo: new InputOnlineFile(fileStream));
+                    fileStream.Close();
+                }
+            }
+            
+        }
         #endregion
     }
 }
