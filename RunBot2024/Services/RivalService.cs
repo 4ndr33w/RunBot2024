@@ -94,14 +94,14 @@ namespace RunBot2024.Services
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
                 var queryString = new StringBuilder();
-                queryString.Append($"SELECT \"Company\" as \"CompanyName\", \n");
+                queryString.Append($"SELECT \"Company\" as \"Name\", \n");
                 queryString.Append($"SUM (\"TotalResult\") as \"Result\", \n");
                 queryString.Append($"COUNT (\"Company\") as \"RivalsCount\" \n");
 
                 queryString.Append($"FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" \n");
                 queryString.Append($"WHERE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"TotalResult\" > 0 \n");
 
-                queryString.Append($"GROUP BY \"CompanyName\" \n");
+                queryString.Append($"GROUP BY \"Name\" \n");
                 queryString.Append($"ORDER BY \"Result\" DESC;");
 
                 await connection.OpenAsync();

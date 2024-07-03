@@ -29,20 +29,20 @@ namespace RunBot2024.Migrations
 
             modelBuilder.Entity("RunBot2024.Models.City", b =>
                 {
-                    b.Property<int>("CityId")
+                    b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.HasKey("CityId");
+                    b.HasKey("Id");
 
                     b.ToTable((string)null);
                 });
 
             modelBuilder.Entity("RunBot2024.Models.Company", b =>
                 {
-                    b.Property<int>("CompanyId")
+                    b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.HasKey("CompanyId");
+                    b.HasKey("Id");
 
                     b.ToTable((string)null);
                 });
@@ -72,10 +72,10 @@ namespace RunBot2024.Migrations
 
             modelBuilder.Entity("RunBot2024.Models.Region", b =>
                 {
-                    b.Property<int>("RegionId")
+                    b.Property<int>("Id")
                         .HasColumnType("integer");
 
-                    b.HasKey("RegionId");
+                    b.HasKey("Id");
 
                     b.ToTable((string)null);
                 });

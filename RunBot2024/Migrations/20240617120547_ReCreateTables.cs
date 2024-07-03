@@ -11,7 +11,7 @@ namespace RunBot2024.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "RegionName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "RegionList",
                 type: "text",
@@ -19,7 +19,7 @@ namespace RunBot2024.Migrations
                 defaultValue: "");
 
             migrationBuilder.AddColumn<int>(
-                name: "CityId",
+                name: "Id",
                 schema: "RunBot2024",
                 table: "CompanyList",
                 type: "integer",
@@ -27,7 +27,7 @@ namespace RunBot2024.Migrations
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<string>(
-                name: "CompanyName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "CompanyList",
                 type: "text",
@@ -35,7 +35,7 @@ namespace RunBot2024.Migrations
                 defaultValue: "");
 
             migrationBuilder.AddColumn<string>(
-                name: "CityName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "CityList",
                 type: "text",
@@ -43,7 +43,7 @@ namespace RunBot2024.Migrations
                 defaultValue: "");
 
             migrationBuilder.AddColumn<int>(
-                name: "RegionId",
+                name: "Id",
                 schema: "RunBot2024",
                 table: "CityList",
                 type: "integer",
@@ -55,27 +55,27 @@ namespace RunBot2024.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "RegionName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "RegionList");
 
             migrationBuilder.DropColumn(
-                name: "CityId",
+                name: "Id",
                 schema: "RunBot2024",
                 table: "CompanyList");
 
             migrationBuilder.DropColumn(
-                name: "CompanyName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "CompanyList");
 
             migrationBuilder.DropColumn(
-                name: "CityName",
+                name: "Name",
                 schema: "RunBot2024",
                 table: "CityList");
 
             migrationBuilder.DropColumn(
-                name: "RegionId",
+                name: "Id",
                 schema: "RunBot2024",
                 table: "CityList");
         }

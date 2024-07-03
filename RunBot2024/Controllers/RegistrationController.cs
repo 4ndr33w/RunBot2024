@@ -237,7 +237,7 @@ namespace RunBot2024.Controllers
 
                 foreach (var eachRegion in _regionList)
                 {
-                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(eachRegion.RegionName, $"{eachRegion.RegionId}");
+                    var _currentRegionButton = InlineKeyboardButton.WithCallbackData(eachRegion.Name, $"{eachRegion.Id}");
 
                     regionButtons[i] = new InlineKeyboardButton[1] { _currentRegionButton };
                     i++;
@@ -249,9 +249,9 @@ namespace RunBot2024.Controllers
 
                 var regionCallback = await AwaitQuery();
 
-                Region selectedRegion = _regionList.First(r => r.RegionId == Convert.ToInt32(regionCallback));
+                Region selectedRegion = _regionList.First(r => r.Id == Convert.ToInt32(regionCallback));
 
-                string region = selectedRegion.RegionName;
+                string region = selectedRegion.Name;
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
@@ -264,13 +264,13 @@ namespace RunBot2024.Controllers
 
                 int y = 0;
 
-                List<City> selectedRegionCityList = new List<City>(_cityList.Where(c => c.RegionId == selectedRegion.RegionId).ToList());
+                List<City> selectedRegionCityList = new List<City>(_cityList.Where(c => c.RegionId == selectedRegion.Id).ToList());
 
                 InlineKeyboardButton[][] cityButtons = new InlineKeyboardButton[selectedRegionCityList.Count][];
 
                 foreach (var city in selectedRegionCityList)
                 {
-                    var _currentCityButton = InlineKeyboardButton.WithCallbackData(city.CityName, $"{city.CityId}");
+                    var _currentCityButton = InlineKeyboardButton.WithCallbackData(city.Name, $"{city.Id}");
                     cityButtons[y] = new InlineKeyboardButton[1] { _currentCityButton };
                     y++;
                 }
@@ -281,11 +281,11 @@ namespace RunBot2024.Controllers
 
                 var cityCallback = await AwaitQuery();
 
-                City selectedCity = _cityList.First(c => c.CityId == Convert.ToInt32(cityCallback));
+                City selectedCity = _cityList.First(c => c.Id == Convert.ToInt32(cityCallback));
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, вы выбрали {selectedCity.CityName}",
+                    text: $"{_name}, вы выбрали {selectedCity.Name}",
                     messageId: cityMessage.MessageId,
                     replyMarkup: null
                     );
@@ -295,12 +295,12 @@ namespace RunBot2024.Controllers
 
                 int j = 0;
 
-                List<Company> selectedCityCompanies = new List<Company>(_companyList.Where(c => c.CityId == selectedCity.CityId).ToList());
+                List<Company> selectedCityCompanies = new List<Company>(_companyList.Where(c => c.CityId == selectedCity.Id).ToList());
                 InlineKeyboardButton[][] companyButtons = new InlineKeyboardButton[selectedCityCompanies.Count][];
 
                 foreach (var company in selectedCityCompanies)
                 {
-                    var _currentCompanyButton = InlineKeyboardButton.WithCallbackData(company.CompanyName, $"{company.CompanyId}");
+                    var _currentCompanyButton = InlineKeyboardButton.WithCallbackData(company.Name, $"{company.Id}");
                     companyButtons[j] = new InlineKeyboardButton[1] { _currentCompanyButton };
                     j++;
                 }
@@ -311,11 +311,11 @@ namespace RunBot2024.Controllers
 
                 var companyCallback = await AwaitQuery();
 
-                Company selectedCompany = _companyList.First(c => c.CompanyId == Convert.ToInt32(companyCallback));
+                Company selectedCompany = _companyList.First(c => c.Id == Convert.ToInt32(companyCallback));
 
                 await Client.EditMessageTextAsync(
                     chatId: FromId,
-                    text: $"{_name}, вы выбрали {selectedCompany.CompanyName}",
+                    text: $"{_name}, вы выбрали {selectedCompany.Name}",
                     messageId: companyMessage.MessageId,
                     replyMarkup: null
                     );
@@ -329,7 +329,7 @@ namespace RunBot2024.Controllers
                 newRival.Name = name;
                 newRival.Gender = gender;
                 newRival.Age = age;
-                newRival.Company = selectedCompany.CompanyName;
+                newRival.Company = selectedCompany.Name;
                 newRival.CreatedAt = DateTime.UtcNow;
                 newRival.TelegramId = FromId;
                 newRival.TotalResult = 0;

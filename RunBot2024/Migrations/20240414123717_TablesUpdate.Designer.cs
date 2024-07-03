@@ -29,26 +29,26 @@ namespace RunBot2024.Migrations
 
             modelBuilder.Entity("RunBot2024.Models.City", b =>
                 {
-                    b.Property<int>("CityId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CityId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.HasKey("CityId");
+                    b.HasKey("Id");
 
                     b.ToTable("CityList", "RunBot2024");
                 });
 
             modelBuilder.Entity("RunBot2024.Models.Company", b =>
                 {
-                    b.Property<int>("CompanyId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CompanyId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.HasKey("CompanyId");
+                    b.HasKey("Id");
 
                     b.ToTable("CompanyList", "RunBot2024");
                 });
@@ -78,13 +78,13 @@ namespace RunBot2024.Migrations
 
             modelBuilder.Entity("RunBot2024.Models.Region", b =>
                 {
-                    b.Property<int>("RegionId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RegionId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.HasKey("RegionId");
+                    b.HasKey("Id");
 
                     b.ToTable("RegionList", "RunBot2024");
                 });

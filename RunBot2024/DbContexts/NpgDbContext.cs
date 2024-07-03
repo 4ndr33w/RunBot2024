@@ -61,19 +61,19 @@ namespace RunBot2024.DbContexts
             modelBuilder.Entity<City>(e =>
             {
                 e.ToTable(_configuration["CityListTable"]);
-                e.HasKey(e => e.CityId);
+                e.HasKey(e => e.Id);
             });
 
             modelBuilder.Entity<Region>(e =>
             {
                 e.ToTable(_configuration["RegionListTable"]);
-                e.HasKey(e => e.RegionId);
+                e.HasKey(e => e.Id);
             });
 
             modelBuilder.Entity<Company>(e =>
             {
                 e.ToTable(_configuration["CompanyListTable"]);
-                e.HasKey(e => e.CompanyId);
+                e.HasKey(e => e.Id);
             });
         }
     }

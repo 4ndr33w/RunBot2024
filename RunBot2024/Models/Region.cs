@@ -4,11 +4,11 @@ namespace RunBot2024.Models
 {
     public class Region
     {
-        private int _regionId;
-        private string _regionName;
+        private int _Id;
+        private string _name;
 
         [Key]
-        public int RegionId { get { return _regionId; } set => _regionId = value; }
-        public string RegionName { get { return _regionName; } set => _regionName = value; }
+        public int Id { get { return _Id; } set => _Id = value; }
+        public string Name { get { return _name; } set => _name = value; }
     }
 }
