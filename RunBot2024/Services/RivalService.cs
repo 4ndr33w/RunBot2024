@@ -94,14 +94,15 @@ namespace RunBot2024.Services
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
                 var queryString = new StringBuilder();
-                queryString.Append($"SELECT \"Company\" as \"Name\", \n");
+                queryString.Append($"SELECT \"Company\" as \"CompanyName\", \n");
                 queryString.Append($"SUM (\"TotalResult\") as \"Result\", \n");
                 queryString.Append($"COUNT (\"Company\") as \"RivalsCount\" \n");
 
                 queryString.Append($"FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" \n");
                 queryString.Append($"WHERE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"TotalResult\" > 0 \n");
 
-                queryString.Append($"GROUP BY \"Name\" \n");
+                //queryString.Append($"GROUP BY \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"Company\" \n");
+                queryString.Append($"GROUP BY \"CompanyName\" \n");
                 queryString.Append($"ORDER BY \"Result\" DESC;");
 
                 await connection.OpenAsync();
@@ -112,6 +113,13 @@ namespace RunBot2024.Services
                 return response;
             }
         }
+        /*
+        
+                Npgsql.PostgresException (0x80004005): 42803: столбец "RivalList.Company" должен фигурировать в предложении GROUP BY или использоваться в агрегатной функции
+
+                POSITION: 8
+
+         * */
 
         public async Task<RivalModel> GetRivalByIdAsync(long telegramId)
         {

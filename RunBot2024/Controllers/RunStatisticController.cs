@@ -60,9 +60,9 @@ namespace RunBot2024.Controllers
             string male = "мужчины";
             string female = "женщины";
 
-            var qTotal = Q(FilterStat, "all");
-            var qMale = Q(FilterStat, "male");
-            var qFemale = Q(FilterStat, "female");
+            var qTotal = Q(GenderSelect, "all");
+            var qMale = Q(GenderSelect, "male");
+            var qFemale = Q(GenderSelect, "female");
 
             RowButton(all, qTotal);
             RowButton(male, qMale);
@@ -70,7 +70,7 @@ namespace RunBot2024.Controllers
         }
 
         [Action]
-        private async Task FilterStat(string gender)
+        private async Task GenderSelect(string gender)
         {
             PushL("Сводка по участникам.");
 
