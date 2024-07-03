@@ -60,7 +60,7 @@ namespace RunBot2024.Controllers
                 KButton("/Управление"); // Done
             }
             _messageService = new MessageService(_configuration);
-            await _messageService.SendFileMessage(_configuration["StartMessageTextFilePath"], FromId);
+            await _messageService.SendMessageFromTextFile(_configuration["StartMessageTextFilePath"], FromId);
 
             //-------------------------------------------------------------------------
             //  Возникла необходимость отправки сообщения через BotController
@@ -69,7 +69,7 @@ namespace RunBot2024.Controllers
             //  хотя изображение отправляется корректно
             PushL("<b>Хороших вам результатов!</b>");
             //-------------------------------------------------------------------------
-            await _messageService.SendFileMessage(_configuration["LogoFilePath"], FromId);
+            await _messageService.SendImageFromFile(_configuration["LogoFilePath"], FromId);
         }
         #endregion
 
@@ -133,7 +133,7 @@ namespace RunBot2024.Controllers
         public async Task Help()
         {
             _messageService = new MessageService(_configuration);
-            await _messageService.SendFileMessage(_configuration["HelpMessageTextFilePath"], FromId);
+            await _messageService.SendMessageFromTextFile(_configuration["HelpMessageTextFilePath"], FromId);
         }
         #endregion
 

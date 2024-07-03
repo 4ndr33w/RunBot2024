@@ -1,5 +1,4 @@
 ﻿using Deployf.Botf;
-using Microsoft.Extensions.Options;
 using RunBot2024.Models;
 using RunBot2024.Services;
 using RunBot2024.Services.Interfaces;
@@ -371,7 +370,7 @@ namespace RunBot2024.Controllers
                         await Send($"{rival.Name}, {rival.Company}");
 
                         _messageService = new MessageService(_configuration);
-                        await _messageService.SendFileMessage(_configuration["CompleteRegisterMessageTextFilePath"], FromId);
+                        await _messageService.SendMessageFromTextFile(_configuration["CompleteRegisterMessageTextFilePath"], FromId);
                     }
                     else
                     {

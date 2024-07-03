@@ -20,31 +20,25 @@ namespace RunBot2024.Services
             _botClient = new TelegramBotClient(_botClientOptions);
         }
 
-        public async Task SendFileMessage(string filePath, long chatId)
+        public async Task SendMessageFromTextFile(string filePath, long chatId)
         {
-            string fileExtension = filePath.Substring(filePath.Length - 3, 3).ToLower();
-            bool isTextFile = fileExtension == "txt" ? true : false;
-
-            if (isTextFile)
+            using (var streamReader = new StreamReader(filePath))
             {
-                using (var streamReader = new StreamReader(filePath))
-                {
-                    StringBuilder messageText = new StringBuilder();
-                    messageText.Append(await streamReader.ReadToEndAsync());
-                    streamReader.Close();
+                StringBuilder messageText = new StringBuilder();
+                messageText.Append(await streamReader.ReadToEndAsync());
+                streamReader.Close();
 
-                    await _botClient.SendTextMessageAsync(chatId, messageText.ToString(), ParseMode.Html);
-                    messageText.Clear();
-                }
+                await _botClient.SendTextMessageAsync(chatId, messageText.ToString(), ParseMode.Html);
+                messageText.Clear();
             }
+        }
 
-            else
-            {
-                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var logo = new InputOnlineFile(fileStream);
-                await _botClient.SendPhotoAsync(chatId, logo);
-                fileStream.Close();
-            }
+        public async Task SendImageFromFile(string filePath, long chatId)
+        {
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var logo = new InputOnlineFile(fileStream);
+            await _botClient.SendPhotoAsync(chatId, logo);
+            fileStream.Close();
         }
     }
 }
