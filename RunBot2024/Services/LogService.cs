@@ -102,5 +102,10 @@ namespace RunBot2024.Services
                 return response.ToList();
             }
         }
+
+        public async Task SaveErrorLog(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        {
+
+        }
     }
 }

@@ -67,8 +67,7 @@ namespace RunBot2024.Controllers
 
             var message = await AwaitText();
 
-            //var rivals = await _rivalService.GetAllRivalsAsync();
-            var existingRival = await _rivalService.GetRivalByIdAsync(FromId); //rivals.ToList().Where(r => r.TelegramId == FromId).FirstOrDefault();
+            var existingRival = await _rivalService.GetRivalByIdAsync(FromId); 
             string name = "";
 
             if (existingRival != null || existingRival != default)

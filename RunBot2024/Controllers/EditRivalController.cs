@@ -215,16 +215,12 @@ namespace RunBot2024.Controllers
                 string oldCompanyName = new string(rival.Company);
 
                 Region newRegion = await ChooseNewRegion();
-
                 City newCity = await ChooseNewCity(newRegion);
-
                 Company newCompany = await ChooseNewCompany(newCity);
-
                 rival.Company = newCompany.Name;
 
-
-                var result = await _rivalService.UpdateRivalAsync(rival);
-                if (result)
+                var isRivalUpdated = await _rivalService.UpdateRivalAsync(rival);
+                if (isRivalUpdated)
                 {
                     await Send($"Предприятие участника {rival.Name} изменено:\nс {oldCompanyName} на {rival.Company}");
                 }
@@ -249,7 +245,7 @@ namespace RunBot2024.Controllers
 
                 InlineKeyboardMarkup regionMarkup = GetKeyboardMarkupFromCollection(regionList);
 
-                Message regionMessage = await Client
+                Message message = await Client
                     .SendTextMessageAsync(FromId, $"Выберите регион, в котором находится требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, regionMarkup);
 
                 var regionCallback = await AwaitQuery();
@@ -259,9 +255,9 @@ namespace RunBot2024.Controllers
                 string regionName = newRegion.Name;
 
                 await Client.EditMessageTextAsync(
-                chatId: FromId,
+                    chatId: FromId,
                     text: $"{regionName}",
-                    messageId: regionMessage.MessageId,
+                    messageId: message.MessageId,
                     replyMarkup: null
                     );
             }
@@ -313,7 +309,6 @@ namespace RunBot2024.Controllers
         private async Task<Company> ChooseNewCompany(City newCity)
         {
             Company newCompany = new Company();
-
             var companyList = await _companyService.GetCompanyListAsync();
             List<Company> companiesInSelectedCity = new List<Company>(companyList.Where(c => c.CityId == newCity.Id).ToList());
 
@@ -323,7 +318,6 @@ namespace RunBot2024.Controllers
                    .SendTextMessageAsync(FromId, $"Выберите требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, companyMarkup);
 
             var companyCallback = await AwaitQuery();
-
             newCompany = companyList.First(c => c.Id == Convert.ToInt32(companyCallback));
 
             await Client.EditMessageTextAsync(
@@ -433,7 +427,7 @@ namespace RunBot2024.Controllers
             _logger.LogError(e, "Unhandled exception");
             if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)
             {
-                await AnswerCallback($"Error:\n{e}");
+                await AnswerCallback($"Error");
             }
             else if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
             {
