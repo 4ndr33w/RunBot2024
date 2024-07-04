@@ -22,7 +22,6 @@ namespace RunBot2024.Controllers
         readonly IRivalService _rivalService;
 
         private MessageService _messageService;
-        //private MessageController _messageService;
 
         public MainBotController
             (
@@ -63,12 +62,13 @@ namespace RunBot2024.Controllers
             await _messageService.SendMessageFromTextFile(_configuration["StartMessageTextFilePath"], FromId);
 
             //-------------------------------------------------------------------------
-            //  Возникла необходимость отправки сообщения через BotController
-            //  иначе при отправке изображения не из этого метода
+            //  Без await Send("some text");
+            //  после отправки изображения
             //  выскакивает UnhandeledException 'text message is empty'
             //  хотя изображение отправляется корректно
-            PushL("<b>Хороших вам результатов!</b>");
+            await Send("<b>Хороших вам результатов!</b>");
             //-------------------------------------------------------------------------
+
             await _messageService.SendImageFromFile(_configuration["LogoFilePath"], FromId);
         }
         #endregion
@@ -340,6 +340,7 @@ namespace RunBot2024.Controllers
         #endregion
 
         #region  roleList / adminList
+
         [Authorize("admin")]
         [Action("/roleList")]
         public async Task RoleList()
@@ -373,7 +374,7 @@ namespace RunBot2024.Controllers
         #region setAdmin
 
         [Action("/setAdmin")]
-        public async Task SetAdmin()
+        public async Task ChangeUserStatusFromUserToAdmin()
         {
             var mainAdminTelegramId = Convert.ToInt64(_configuration["AdminTelegramId"]);
             if (FromId == mainAdminTelegramId)
@@ -414,7 +415,7 @@ namespace RunBot2024.Controllers
         #region setToUser
 
         [Action("/setToUser")]
-        public async Task SetToUser()
+        public async Task ChangeUserStatusFromAdminToUser()
         {
             var mainAdminTelegramId = Convert.ToInt64(_configuration["AdminTelegramId"]);
             if (FromId == mainAdminTelegramId)

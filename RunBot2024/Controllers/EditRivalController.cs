@@ -247,8 +247,7 @@ namespace RunBot2024.Controllers
             {
                 var regionList = await _companyService.GetRegionListAsync();
 
-                //InlineKeyboardMarkup regionMarkup = await GetRegionCollectionAsKeyboardMarkup(regionList);//new InlineKeyboardMarkup(inlineButtons);
-                InlineKeyboardMarkup regionMarkup = await GetCollectionAsKeyboardMarkup(regionList);
+                InlineKeyboardMarkup regionMarkup = GetKeyboardMarkupFromCollection(regionList);
 
                 Message regionMessage = await Client
                     .SendTextMessageAsync(FromId, $"Выберите регион, в котором находится требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, regionMarkup);
@@ -285,7 +284,7 @@ namespace RunBot2024.Controllers
 
                 List<City> citiesInSelectedRegion = new List<City>(cityList.Where(c => c.RegionId == newRegion.Id).ToList());
 
-                InlineKeyboardMarkup cityMarkup = await GetCollectionAsKeyboardMarkup(citiesInSelectedRegion);
+                InlineKeyboardMarkup cityMarkup = GetKeyboardMarkupFromCollection(citiesInSelectedRegion);
 
                 Message cityMessage = await Client
                     .SendTextMessageAsync(FromId, $"Выберите город, в котором находится требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, cityMarkup);
@@ -318,7 +317,7 @@ namespace RunBot2024.Controllers
             var companyList = await _companyService.GetCompanyListAsync();
             List<Company> companiesInSelectedCity = new List<Company>(companyList.Where(c => c.CityId == newCity.Id).ToList());
 
-            InlineKeyboardMarkup companyMarkup = await GetCollectionAsKeyboardMarkup(companiesInSelectedCity);
+            InlineKeyboardMarkup companyMarkup = GetKeyboardMarkupFromCollection(companiesInSelectedCity);
 
             Message companyMessage = await Client
                    .SendTextMessageAsync(FromId, $"Выберите требуемое предприятие:", ParseMode.Html, default, default, default, default, 0, true, companyMarkup);
@@ -337,8 +336,8 @@ namespace RunBot2024.Controllers
             return newCompany;
         }
 
-        [Action]
-        private async Task<InlineKeyboardMarkup> GetCollectionAsKeyboardMarkup<T>(List<T> collection)
+        //[Action]
+        private InlineKeyboardMarkup GetKeyboardMarkupFromCollection<T>(List<T> collection)
         {
             InlineKeyboardButton[][] inlineButtons = new InlineKeyboardButton[collection.Count][];
 
