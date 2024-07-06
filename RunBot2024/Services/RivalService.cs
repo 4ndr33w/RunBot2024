@@ -3,6 +3,8 @@ using RunBot2024.Services.Interfaces;
 using Npgsql;
 using System.Text;
 using Dapper;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace RunBot2024.Services
 {
@@ -93,33 +95,35 @@ namespace RunBot2024.Services
         {
             using (var connection = new NpgsqlConnection(_configuration.GetConnectionString("NpgConnection")))
             {
-                var queryString = new StringBuilder();
-                queryString.Append($"SELECT \"Company\" as \"CompanyName\", \n");
-                queryString.Append($"SUM (\"TotalResult\") as \"Result\", \n");
-                queryString.Append($"COUNT (\"Company\") as \"RivalsCount\" \n");
-
-                queryString.Append($"FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" \n");
-                queryString.Append($"WHERE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"TotalResult\" > 0 \n");
-
-                //queryString.Append($"GROUP BY \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"Company\" \n");
-                queryString.Append($"GROUP BY \"CompanyName\" \n");
-                queryString.Append($"ORDER BY \"Result\" DESC;");
+                string queryString = GetQueryStringOfCompanyStatistic();
 
                 await connection.OpenAsync();
+
                 var response = await connection
                     .QueryAsync<CompanyStatisticModel>
                     (queryString.ToString());
+
                 await connection.CloseAsync();
+
                 return response;
             }
         }
-        /*
-        
-                Npgsql.PostgresException (0x80004005): 42803: столбец "RivalList.Company" должен фигурировать в предложении GROUP BY или использоваться в агрегатной функции
 
-                POSITION: 8
+        private string GetQueryStringOfCompanyStatistic()
+        {
+            var queryString = new StringBuilder();
+            queryString.Append($"SELECT \"Company\" as \"CompanyName\", \n");
+            queryString.Append($"SUM (\"TotalResult\") as \"Result\", \n");
+            queryString.Append($"COUNT (\"Company\") as \"RivalsCount\" \n");
 
-         * */
+            queryString.Append($"FROM \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\" \n");
+            queryString.Append($"WHERE \"{_configuration["PostgreDefaultSchema"]}\".\"{_configuration["RivalTable"]}\".\"TotalResult\" > 0 \n");
+
+            queryString.Append($"GROUP BY \"CompanyName\" \n");
+            queryString.Append($"ORDER BY \"Result\" DESC;");
+
+            return queryString.ToString();
+        }
 
         public async Task<RivalModel> GetRivalByIdAsync(long telegramId)
         {

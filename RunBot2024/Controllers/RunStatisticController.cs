@@ -75,20 +75,16 @@ namespace RunBot2024.Controllers
             PushL("Сводка по участникам.");
 
             var rivalList = await _rivalService.GetAllRivalsAsync();
+            rivalList = rivalList
+                .OrderByDescending(x => x.TotalResult)
+                .ToList();
 
             if (gender != "all")
             {
                 rivalList = rivalList
                     .Where(x => x.Gender == gender[0])
-                    .OrderByDescending(x => x.TotalResult)
                     .ToList();
             }
-
-            //---------------------------------------------------------------------
-            //Передаём FilteredRivalList для отображения статистики по участникам
-            //         FullRivalList - для подсчета статистики по предприятиям
-            //---------------------------------------------------------------------
-
             await RivalStatisticsListViewMethod(rivalList, gender);
         }
 
@@ -135,14 +131,19 @@ namespace RunBot2024.Controllers
         {
             var companyStatList = await _rivalService.GetCompanyStatisitcs();
 
-            int index = 0;
+            int companiesCounter = 0;
 
             StringBuilder statList = new StringBuilder();
+            
             foreach (var item in companyStatList)
             {
-                index++;
-                statList.AppendLine($"{index} - {item.CompanyName} - {item.Result} км");
-                statList.AppendLine($"     •   {item.RivalsCount} участников");
+                    companiesCounter++;
+                    statList.AppendLine($"{companiesCounter} - {item.CompanyName} - {item.Result} км");
+                    statList.AppendLine($"     •   {item.RivalsCount} участников");
+            }
+            if (companiesCounter == 0)
+            {
+                statList.AppendLine("Нет данных для отображения");
             }
             await Send(statList.ToString());
 

@@ -288,7 +288,7 @@ namespace RunBot2024.Controllers
 
         #endregion
 
-        #region Methods:  PreHandle / OnException / Unauthorized
+        #region Methods:  PreHandle(BeforeAll) / OnException / Unauthorized
 
         [On(Handle.BeforeAll)]
         public void PreHandle()
@@ -335,7 +335,7 @@ namespace RunBot2024.Controllers
         [On(Handle.Unauthorized)]
         public void Unauthorized()
         {
-            Push("Forbidden");
+            Push("Unauthorized");
         }
         #endregion
 

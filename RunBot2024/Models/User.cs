@@ -14,7 +14,6 @@ namespace RunBot2024.Models
 
         [PrimaryKey]
         public long Id { get => _id; set => _id = value; }
-
         [Indexed]
         public string UserName { get => _userName; set => _userName = value; }
         public string FullName { get => _userFullName; set => _userFullName = value; }
