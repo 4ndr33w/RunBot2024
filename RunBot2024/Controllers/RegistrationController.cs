@@ -391,7 +391,7 @@ namespace RunBot2024.Controllers
         #region Сохранение лога ошибок
 
         [Action]
-        public async Task SaveErrorLogMethod(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        public async Task SaveErrorLogMethod(Exception e, long fromId, string adminName = null, string selectedRivalName = null)
         {
             _logger.LogError(e, "Unhandled exception");
             if (Context.Update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery)

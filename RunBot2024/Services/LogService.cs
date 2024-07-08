@@ -3,15 +3,24 @@ using Npgsql;
 using RunBot2024.Models;
 using RunBot2024.Services.Interfaces;
 using System.Text;
+using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types;
 
 namespace RunBot2024.Services
 {
-    public class LogService : ILogService
+    public class LogService : ILogService, ILogSaver
     {
         private readonly IConfiguration _configuration;
+
+        private TelegramBotClientOptions _botClientOptions;
+        private TelegramBotClient _botClient;
         public LogService(IConfiguration configuration)
         {
             _configuration = configuration;
+
+            _botClientOptions = new TelegramBotClientOptions(_configuration["token"]);
+            _botClient = new TelegramBotClient(_botClientOptions);
         }
         public async Task CreateErrorLogAsync(ErrorLog errorLog)
         {
@@ -103,9 +112,53 @@ namespace RunBot2024.Services
             }
         }
 
-        public async Task SaveErrorLog(Exception e, long fromId, string adminName, string selectedRivalName = null)
+        public async Task SaveErrorLog(Exception e, long fromId, string adminName, string rivalName = null)
         {
+            string message = "При выполнении операции возникла ошибка";
+            await _botClient.SendTextMessageAsync(fromId, message, ParseMode.Html);
 
+            StringBuilder errorLogMessage = new StringBuilder();
+
+            switch (adminName)
+            {
+                case null:
+                    {
+                        if (rivalName != null)
+                        {
+                            errorLogMessage.Append($"admin: {adminName} - ");
+                            errorLogMessage.Append($"Ошибка при отправке собщения участнику {rivalName}: ");
+                        }
+                        else
+                        {
+                            errorLogMessage.Append($"admin: {adminName} - ");
+                            errorLogMessage.Append($"\nОшибка при отправке собщения всем участникам");
+                        }
+                        break;
+                    }
+                default:
+                    {
+                        if (rivalName != null)
+                        {
+                            errorLogMessage.Append($"У участника {rivalName} возникла ошибка: ");
+                        }
+                        else
+                        {
+                            errorLogMessage.Append($"Ошибка: ");
+                        }
+                        break;
+                    }
+            }
+
+           
+
+            errorLogMessage.Append(e.ToString());
+
+            ErrorLog errorLog = new ErrorLog();
+            errorLog.ErrorMessage = errorLogMessage.ToString();
+            errorLog.TelegramId = fromId;
+            errorLog.LastUpdated = DateTime.UtcNow;
+
+            await CreateErrorLogAsync(errorLog);
         }
     }
 }
